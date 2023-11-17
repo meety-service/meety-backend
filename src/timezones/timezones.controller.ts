@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { TimezonesService } from './timezones.service';
 
 @Controller('timezones')
 export class TimezonesController {
