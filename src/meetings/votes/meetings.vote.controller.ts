@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Param } from '@nestjs/common';
-import { MeetingsVoteService } from './meetings.votes.service';
+import { MeetingsVoteService } from './meetings.vote.service';
 
 @Controller('meetings/:id/vote')
 export class MeetingsVoteController {

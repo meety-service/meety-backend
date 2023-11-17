@@ -6,7 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TimezonesModule } from './timezones/timezones.module';
 import { MeetingsScheduleModules} from './meetings/schedule/meetings.schedule.module';
 import { UsersModule } from './users/users.module';
-import { MeetingsVoteModule } from './meetings/votes/meetings.votes.module';
+import { MeetingsVoteModule } from './meetings/votes/meetings.vote.module';
 import { MeetingsModule } from './meetings/meetings.module';
 
 @Module({
