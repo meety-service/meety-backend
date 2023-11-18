@@ -20,8 +20,7 @@ export class MeetingsController {
 
   @Delete('/:id')
   deleteMeetingById(@Param('id') meetingId: number) {
-    const success = this.meetingsService.deleteMeetingById(meetingId);
-    return { success };
+    return this.meetingsService.deleteMeetingById(meetingId);
   }
 
   @Patch('/:id/hiding')

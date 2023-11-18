@@ -14,8 +14,14 @@ export class MeetingsService {
     return await this.meetings.find();
   }
 
-  deleteMeetingById(meetingId: number): boolean {
-    return false;
+  async deleteMeetingById(meetingId: number): Promise<any> {
+    const targetMeeting = await this.meetings.findOne({
+      where: { id: meetingId },
+    });
+    if (!targetMeeting)
+      throw new HttpException('Meeting Not Found', HttpStatus.NOT_FOUND);
+
+    await this.meetings.delete({ id: meetingId });
   }
 
   patchMeetingById(meetingId: number, listVisible: number): boolean {
