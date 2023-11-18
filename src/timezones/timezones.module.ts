@@ -3,7 +3,7 @@ import { TimezonesController } from './timezones.controller';
 import { TimezonesService } from './timezones.service';
 
 @Module({
-  controllers: [TimezonesController],
-  providers: [TimezonesService],
+  controllers: [],
+  providers: [],
 })
 export class TimezonesModule {}

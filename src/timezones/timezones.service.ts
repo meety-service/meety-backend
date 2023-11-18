@@ -17,7 +17,7 @@ export class TimezonesService {
       const ret = timezoneArr.map((obj) => new TimezoneDTO(obj.id, obj.name));
       return ret;
     } catch (e) {
-      return JSON.parse('[]');
+      return [];
     }
   }
 }
