@@ -24,18 +24,18 @@ export class MeetingsController {
   }
 
   @Patch('/:id/hiding')
-  patchMeetingById(
+  hideMeetingById(
     @Param('id') meetingId: number,
     @Body('list_visible') listVisible: number,
   ) {
-    const success = this.meetingsService.patchMeetingById(meetingId, listVisible);
-    return {success};
+    const memberId = 1; // TODO: member Id를 request에서 파싱
+    return this.meetingsService.hideMeetingById(meetingId, memberId, listVisible);
   }
 
   @Post()
   createMeeting() {
     const success = this.meetingsService.createMeeting();
-    return {success};
+    return { success };
   }
 
   @Get('/:id')
