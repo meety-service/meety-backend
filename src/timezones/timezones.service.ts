@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Timezone } from 'src/entity/timezone.entity';
 
-class RetObject {
+class TimezoneDTO {
   id: number;
   name: string;
   constructor(id: number, name: string) {
@@ -18,11 +18,11 @@ export class TimezonesService {
     @InjectRepository(Timezone) //속성생성
     private timezones: Repository<Timezone>,
   ) {}
-  async getTimezones(): Promise<JSON> {
+  async getTimezones(): Promise<TimezoneDTO> {
     try {
       const timezoneArr = await this.timezones.find();
-      const ret = timezoneArr.map((obj) => new RetObject(obj.id, obj.name));
-      return JSON.parse(JSON.stringify(ret));
+      const ret = timezoneArr.map((obj) => new TimezoneDTO(obj.id, obj.name));
+      return ret;
     } catch (e) {
       return JSON.parse('[]');
     }
