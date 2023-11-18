@@ -5,22 +5,25 @@ Entity,
 PrimaryGeneratedColumn,
 ManyToOne,
 JoinColumn,
+PrimaryColumn,
 } from 'typeorm';
+import { Meeting } from './meeting.entity';
+import { Member } from './member.entity';
   
 
 @Entity({ name: 'meeting_member' })
 export class MeetingMember extends BaseEntity {
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn({ name: 'meeting_id' })
   meeting_id: number;
 
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn({ name: 'member_id' })
   member_id: number;
 
-  @ManyToOne(type => Meeting, meeting => meeting.meeting_members, { primary: true, onDelete: 'CASCADE' })
+  @ManyToOne((type) => Meeting, meeting => meeting.meeting_members, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'meeting_id' })
   meeting: Meeting;
 
-  @ManyToOne(type => Member, member => member.meeting_members, { primary: true, onDelete: 'CASCADE' })
+  @ManyToOne(type => Member, member => member.meeting_members, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'member_id' })
   member: Member;
   

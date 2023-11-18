@@ -15,8 +15,8 @@ export class Vote extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
   
-  @OneToOne(type => Meeting, meeting => meeting.vote_id)
-  @JoinColumn({ name: meeting_id, referencedColumnName: 'id'})
+  @OneToOne(type => Meeting, meeting => meeting.vote)
+  @JoinColumn({ name: 'meeting_id', referencedColumnName: 'id'})
   meeting: Meeting;
 
   @Column()
@@ -25,6 +25,6 @@ export class Vote extends BaseEntity {
   @Column()
   close: number;
 
-  @OneToMany(type => VoteChoice, vote_choice => vote_choice.vote_id)
+  @OneToMany(type => VoteChoice, vote_choices => vote_choices.vote_id)
   vote_choices: VoteChoice[];
 }

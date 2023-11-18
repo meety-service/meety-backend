@@ -10,33 +10,26 @@ import {
 } from 'typeorm';
 
 import {
-  Member,
-} from './member.entity.ts';
-
-import {
   Timezone,
 } from './timezone.entity.js';
-
-import {
-
-}
 
 import { type } from 'os';
 import { MeetingMember } from './meetingMember.entity';
 import { SelectTimetable } from './selectTimetable.entity';
 import { MeetingDate } from './meetingDate.entity'
 import { Vote } from './vote.entity.js';
+import { Member } from './member.entity.js';
 
 @Entity({ name: 'meeting' })
 export class Meeting extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
   
-  @ManyToOne(type=>Member, member =>member.meetings, {primary: true})
+  @ManyToOne(type=>Member, member =>member.meetings)
   @JoinColumn({ name: 'member_id', referencedColumnName: 'id' })
   member_id: Member;
 
-  @ManyToOne(type=>Timezone, timezone =>timezone.meetings, {primary: true})
+  @ManyToOne(type=>Timezone, timezone =>timezone.meetings)
   @JoinColumn({ name: 'timezone_id', referencedColumnName: 'id' })
   timezone_id: Timezone;
 

@@ -20,15 +20,15 @@ export class VoteChoice extends BaseEntity {
   @Column()
   vote_id: number;
 
-  @ManyToOne(type => Vote, vote => vote.vote_choices,{ primary: true, onDelete: 'CASCADE' })
-  @JoinColumn({ name: vote_id, referencedColumnName: id})
+  @ManyToOne(type => Vote, vote => vote.vote_choices,{ onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'vote_id', referencedColumnName: 'id'})
   vote: Vote;
 
   @Column()
   meeting_date_id: number;
 
-  @ManyToOne(type => MeetingDate, meeting_date => meeting_date.vote_choices,{ primary: true, onDelete: 'CASCADE' })
-  @JoinColumn({ name: meeting_date_id, referencedColumnName: id})
+  @ManyToOne(type => MeetingDate, meeting_date => meeting_date.vote_choices, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'meeting_date_id', referencedColumnName: 'id'})
   meeting_date: MeetingDate;
 
   @Column()

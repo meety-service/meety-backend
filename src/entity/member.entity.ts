@@ -8,6 +8,7 @@ import {
 import { Meeting } from './meeting.entity';
 import { SelectTimetable } from './selectTimetable.entity';
 import { VoteChoiceMember } from './voteChoiceMember.entity';
+import { MeetingMember } from './meetingMember.entity';
   
 
 @Entity({ name: 'member' })
