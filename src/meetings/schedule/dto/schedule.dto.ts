@@ -1,6 +1,6 @@
 import { MeetingDate } from "src/entity/meetingDate.entity";
 
-export interface Schedule {
-    nickname: string,
+export class Schedule {
+    nickname: string;
     selected_items: MeetingDate[]
 }
