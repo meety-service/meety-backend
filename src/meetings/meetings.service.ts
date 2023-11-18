@@ -1,3 +1,4 @@
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Meeting } from 'src/entity/meeting.entity';
 import { Repository } from 'typeorm';
@@ -8,6 +9,9 @@ export class MeetingsService {
     @InjectRepository(Meeting)
     private meetings: Repository<Meeting>,
   ) {}
+
+  async getMeetings(): Promise<Meeting[]> {
+    return await this.meetings.find();
   }
 
   deleteMeetingById(meetingId: number): boolean {
