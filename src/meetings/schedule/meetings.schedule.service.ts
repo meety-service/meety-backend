@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Schedule } from 'src/dto/schedule.dto.interface';
+import { Schedule } from 'src/meetings/schedule/dto/schedule.dto.interface';
 
 @Injectable()
 export class MeetingsScheduleService {
