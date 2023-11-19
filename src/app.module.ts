@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -8,6 +8,7 @@ import { MeetingsScheduleModules} from './meetings/schedule/meetings.schedule.mo
 import { UsersModule } from './users/users.module';
 import { MeetingsVoteModule } from './meetings/votes/meetings.vote.module';
 import { MeetingsModule } from './meetings/meetings.module';
+import { APP_PIPE } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -31,6 +32,11 @@ import { MeetingsModule } from './meetings/meetings.module';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,
+    {
+      provide: APP_PIPE,
+      useClass: ValidationPipe,
+    },
+  ],
 })
 export class AppModule {}

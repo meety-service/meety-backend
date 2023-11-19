@@ -22,9 +22,9 @@ export class Vote extends BaseEntity {
   @Column()
   meeting_id: number;
 
-  @Column()
+  @Column({default:0})
   close: number;
 
-  @OneToMany(type => VoteChoice, vote_choices => vote_choices.vote_id)
+  @OneToMany(type => VoteChoice, vote_choices => vote_choices.vote, { cascade: true })
   vote_choices: VoteChoice[];
 }

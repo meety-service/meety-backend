@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Param } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body } from '@nestjs/common';
 import { MeetingsVoteService } from './meetings.vote.service';
+import { CreateVoteDto } from './dto/vote.dto';
 
 @Controller('meetings/:id/vote')
 export class MeetingsVoteController {
@@ -10,8 +11,10 @@ export class MeetingsVoteController {
     return this.meetingsVoteService.getHelloWorld(id);
   }
   
-  // @Post()
-  // postHelloWorld(): string {
-  //   return this.meetingsVotesService.postHelloWorld();
-  // }
+  @Post()
+  createVote(@Param('id') meeting_id: number, @Body() createVoteDto: CreateVoteDto){
+    console.log(createVoteDto.vote_choices[0].times)
+    this.meetingsVoteService.createVote(meeting_id, createVoteDto);
+  }
+
 }

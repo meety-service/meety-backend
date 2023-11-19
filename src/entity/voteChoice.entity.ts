@@ -17,26 +17,26 @@ export class VoteChoice extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ name: 'vote_id'})
   vote_id: number;
 
   @ManyToOne(type => Vote, vote => vote.vote_choices,{ onDelete: 'CASCADE' })
   @JoinColumn({ name: 'vote_id', referencedColumnName: 'id'})
   vote: Vote;
 
-  @Column()
+  @Column({ name : 'meeting_date_id'})
   meeting_date_id: number;
 
   @ManyToOne(type => MeetingDate, meeting_date => meeting_date.vote_choices, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'meeting_date_id', referencedColumnName: 'id'})
   meeting_date: MeetingDate;
 
-  @Column()
-  start_time: Date;
+  @Column({type: 'time'})
+  start_time: string;
 
-  @Column()
-  end_time: Date;
+  @Column({type: 'time'})
+  end_time: string;
 
-  @OneToMany(type => VoteChoiceMember, vote_choice_member => vote_choice_member.vote_choice_id)
+  @OneToMany(type => VoteChoiceMember, vote_choice_member => vote_choice_member.vote_choice, { cascade: true })
   vote_choice_members: VoteChoiceMember[];
 }

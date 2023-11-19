@@ -5,6 +5,7 @@ import {
   PrimaryGeneratedColumn,
   OneToOne,
   ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Member } from './member.entity';
 import { Meeting } from './meeting.entity';
@@ -16,15 +17,27 @@ export class SelectTimetable extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
   
-  @ManyToOne(type => Meeting, meeting => meeting.select_timetables, { onDelete: 'CASCADE' })
+  @Column({name: 'meeting_id'})
   meeting_id: number;
+  
+  @ManyToOne(type => Meeting, meeting => meeting.select_timetables, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'meeting_id' })
+  meeting: Meeting;
 
-  @ManyToOne(type => Member, member => member.select_timetables, { onDelete: 'CASCADE' })
+  @Column({name: 'member_id'})
   member_id: number;
-
-  @ManyToOne(type => MeetingDate, meeting_date => meeting_date.select_timetables,{ onDelete: 'CASCADE' })
+  
+  @ManyToOne(type => Member, member => member.select_timetables, { onDelete: 'CASCADE' })
+  @JoinColumn({name:'member_id'})
+  member: Member;
+  
+  @Column({name: 'meeting_date_id'})
   meeting_date_id: number;
+  
+  @ManyToOne(type => MeetingDate, meeting_date => meeting_date.select_timetables,{ onDelete: 'CASCADE' })
+  @JoinColumn({name:'meeting_date_id'})
+  meeting_date: MeetingDate;
 
-  @Column()
-  select_time: Date;
+  @Column({type:'time'})
+  select_time: string;
 }

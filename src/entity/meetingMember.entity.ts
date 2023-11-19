@@ -22,7 +22,7 @@ export class MeetingMember extends BaseEntity {
   @ManyToOne((type) => Meeting, meeting => meeting.meeting_members, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'meeting_id' })
   meeting: Meeting;
-
+  
   @ManyToOne(type => Member, member => member.meeting_members, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'member_id' })
   member: Member;
@@ -30,6 +30,6 @@ export class MeetingMember extends BaseEntity {
   @Column()
   nickname: string;
 
-  @Column()
+  @Column({default:1})
   list_visible: number;
 }

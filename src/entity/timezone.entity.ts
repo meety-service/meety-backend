@@ -15,7 +15,7 @@ export class Timezone extends BaseEntity {
   @Column()
   name: string;
 
-  @OneToMany(type => Meeting, meeting => meeting.timezone_id)
+  @OneToMany(type => Meeting, meeting => meeting.timezone)
   meetings: Meeting[];
 
 }
