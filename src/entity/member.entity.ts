@@ -16,21 +16,21 @@ export class Member extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
   
-  @Column()
-  token: number;
+  @Column({nullable:true})
+  token: string;
 
   @Column()
   email: string;
 
-  @OneToMany(type => Meeting, meeting => meeting.member_id)
+  @OneToMany(type => Meeting, meeting => meeting.member)
   meetings: Meeting[];
 
-  @OneToMany(type => MeetingMember, meeting_member => meeting_member.member_id)
+  @OneToMany(type => MeetingMember, meeting_member => meeting_member.member)
   meeting_members: MeetingMember[];
 
-  @OneToMany(type => SelectTimetable, select_timetable => select_timetable.member_id)
+  @OneToMany(type => SelectTimetable, select_timetable => select_timetable)
   select_timetables: SelectTimetable[];y
 
-  @OneToMany(type => VoteChoiceMember, vote_choice_member => vote_choice_member.member_id)
+  @OneToMany(type => VoteChoiceMember, vote_choice_member => vote_choice_member.member)
   vote_choice_members: VoteChoiceMember[];
 }

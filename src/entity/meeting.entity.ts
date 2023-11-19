@@ -25,35 +25,41 @@ export class Meeting extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
   
+  @Column({ name: 'member_id' })
+  member_id: number;
+
   @ManyToOne(type=>Member, member =>member.meetings)
   @JoinColumn({ name: 'member_id', referencedColumnName: 'id' })
-  member_id: Member;
+  member: Member;
+
+  @Column({ name: 'timezone_id' })
+  timezone_id: number;
 
   @ManyToOne(type=>Timezone, timezone =>timezone.meetings)
   @JoinColumn({ name: 'timezone_id', referencedColumnName: 'id' })
-  timezone_id: Timezone;
+  timezone: Timezone;
 
   @Column({
     length: 50,
   })
   name: string;
 
-  @Column()
-  start_time: number;
+  @Column({type:'time'})
+  start_time: string;
 
-  @Column()
-  end_time: number;
+  @Column({type: 'time'})
+  end_time: string;
 
-  @OneToMany(type => MeetingMember, meeting_member => meeting_member.meeting_id)
+  @OneToMany(type => MeetingMember, meeting_member => meeting_member.meeting)
   meeting_members: MeetingMember[];
 
-  @OneToMany(type => MeetingDate, meeting_date => meeting_date.meeting_id)
+  @OneToMany(type => MeetingDate, meeting_date => meeting_date.meeting)
   meeting_dates: MeetingDate[];
 
-  @OneToMany(type => SelectTimetable, select_timetable => select_timetable.meeting_id)
+  @OneToMany(type => SelectTimetable, select_timetable => select_timetable.meeting)
   select_timetables: SelectTimetable[];
 
-  @OneToOne(type =>Vote, vote => vote.meeting_id)
-  @JoinColumn()
+  @OneToOne(type =>Vote, vote => vote.meeting, { cascade: true })
+  @JoinColumn({name:"vote_id"})
   vote: Vote;
 }
