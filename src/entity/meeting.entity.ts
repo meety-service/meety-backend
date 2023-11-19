@@ -60,6 +60,5 @@ export class Meeting extends BaseEntity {
   select_timetables: SelectTimetable[];
 
   @OneToOne(type =>Vote, vote => vote.meeting, { cascade: true })
-  @JoinColumn({name:"vote_id"})
   vote: Vote;
 }

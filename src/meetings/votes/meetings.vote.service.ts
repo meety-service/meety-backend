@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Vote } from 'src/entity/vote.entity';
 import { Repository } from 'typeorm';
 import { CreateVoteDto } from './dto/vote.dto';
-import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { VoteChoice } from 'src/entity/voteChoice.entity';
 import { Meeting } from 'src/entity/meeting.entity';
+import { EntityDuplicatedException, EntityNotFoundException, InvalidRequestException } from 'src/common/exception/service.exception';
 
 @Injectable()
 export class MeetingsVoteService {
@@ -17,17 +17,17 @@ export class MeetingsVoteService {
     private readonly meetingRepository: Repository<Meeting>,
   
   ) {}
-
+  
   async createVote(meeting_id : number, createVoteDto : CreateVoteDto){
     const vote = new Vote();
 
     const meeting = await this.meetingRepository.findOne({where:{id:meeting_id}, relations: ['meeting_dates']});
     if (!meeting) {
-      //미팅없음 예외처리
+      throw EntityNotFoundException('미팅을 찾을 수 없습니다');
     }
 
     if(await this.voteRepository.findOne({where:{meeting_id:meeting.id}})){
-      //투표이미 있음 예외처리      
+      throw EntityDuplicatedException('이미 존재하는 투표입니다');     
     }
 
     vote.meeting_id = meeting.id;
@@ -42,8 +42,7 @@ export class MeetingsVoteService {
       
       console.log(meetingDate);
       if(!meetingDate){//meeting날짜 범위 밖일때
-        //예외처리
-
+        throw InvalidRequestException('가능한 미팅 날짜 범위 밖입니다');
       }
       choice.times.map((time) => {
         const voteChoice = new VoteChoice();

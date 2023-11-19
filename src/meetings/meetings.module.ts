@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MeetingsService } from './meetings.service';
 import { MeetingsController } from './meetings.controller';
 import { APP_FILTER } from '@nestjs/core';
-import { HttpExceptionFilter } from 'src/http-exception.filter';
+import { HttpExceptionFilter } from 'src/common/exception-filter/http-exception.filter';
 
 @Module({
   controllers: [MeetingsController],

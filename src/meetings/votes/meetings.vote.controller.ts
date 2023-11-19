@@ -13,8 +13,7 @@ export class MeetingsVoteController {
   
   @Post()
   createVote(@Param('id') meeting_id: number, @Body() createVoteDto: CreateVoteDto){
-    console.log(createVoteDto.vote_choices[0].times)
-    this.meetingsVoteService.createVote(meeting_id, createVoteDto);
+    return this.meetingsVoteService.createVote(meeting_id, createVoteDto);
   }
 
 }
