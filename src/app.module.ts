@@ -8,7 +8,8 @@ import { MeetingsScheduleModules} from './meetings/schedule/meetings.schedule.mo
 import { UsersModule } from './users/users.module';
 import { MeetingsVoteModule } from './meetings/votes/meetings.vote.module';
 import { MeetingsModule } from './meetings/meetings.module';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_PIPE } from '@nestjs/core';
+import { ServiceExceptionToHttpExceptionFilter } from './common/exception-filter/http-exception.filter';
 
 @Module({
   imports: [
@@ -36,6 +37,10 @@ import { APP_PIPE } from '@nestjs/core';
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: ServiceExceptionToHttpExceptionFilter,
     },
   ],
 })
