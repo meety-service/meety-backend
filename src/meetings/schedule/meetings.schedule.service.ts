@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Schedule } from 'src/meetings/schedule/dto/schedule.dto';
+import { ScheduleDto } from 'src/meetings/schedule/dto/schedule.dto';
 
 @Injectable()
 export class MeetingsScheduleService {
@@ -7,15 +7,15 @@ export class MeetingsScheduleService {
     return false;
   }
 
-  getPersonalSchedules(meetingId: number): Schedule {
+  getPersonalSchedules(meetingId: number): ScheduleDto {
     return;
   }
 
-  updateSchedules(meetingId: number, newSchedule: Schedule): boolean {
+  updateSchedules(meetingId: number, newSchedule: ScheduleDto): boolean {
     return false;
   }
 
-  getAllSchedules(meetingId: number): Schedule[] {
+  getAllSchedules(meetingId: number): ScheduleDto[] {
     return [];
   }
 }

@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { MeetingsScheduleService } from './meetings.schedule.service';
-import { Schedule } from 'src/meetings/schedule/dto/schedule.dto';
+import { ScheduleDto } from 'src/meetings/schedule/dto/schedule.dto';
 @Controller('meetings/:id/schedule')
 export class MeetingsScheduleController {
   constructor(
@@ -21,7 +21,7 @@ export class MeetingsScheduleController {
   @Put()
   updateSchedules(
     @Param('id') meetingId: number,
-    @Body() newSchedule: Schedule,
+    @Body() newSchedule: ScheduleDto,
   ) {
     const success = this.MeetingsScheduleService.updateSchedules(
       meetingId,
