@@ -15,6 +15,12 @@ export const InvalidRequestException = (message?: string): ServiceException => {
     return new ServiceException(INVALID_REQUEST, message);
 };
 
+export const NoRightException = (message?: string): ServiceException => {
+    return new ServiceException(INVALID_REQUEST, message);
+};
+
+
+
 export class ServiceException extends Error {
     readonly errorCode: ErrorCode;
   

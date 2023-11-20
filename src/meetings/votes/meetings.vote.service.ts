@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { CreateVoteDto, FetchVoteDto, VoteChoiceRes } from './dto/vote.dto';
 import { VoteChoice } from 'src/entity/voteChoice.entity';
 import { Meeting } from 'src/entity/meeting.entity';
-import { EntityDuplicatedException, EntityNotFoundException, InvalidRequestException } from 'src/common/exception/service.exception';
+import { EntityDuplicatedException, EntityNotFoundException, InvalidRequestException, NoRightException } from 'src/common/exception/service.exception';
 import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { VoteChoiceMember } from 'src/entity/voteChoiceMember.entity';
 
@@ -28,14 +28,20 @@ export class MeetingsVoteService {
   
   async createVote(meeting_id : number, createVoteDto : CreateVoteDto){
     const vote = new Vote();
-
+    
     const meeting = await this.meetingRepository.findOne({where:{id:meeting_id}, relations: ['meeting_dates']});
     if (!meeting) {
       throw EntityNotFoundException('미팅을 찾을 수 없습니다');
     }
-
+    
     if(await this.voteRepository.findOne({where:{meeting_id:meeting.id}})){
       throw EntityDuplicatedException('이미 존재하는 투표입니다');     
+    }
+    
+    //TODO 로그인 유저 id받기
+    const user_id = 1;
+    if(meeting.member_id != user_id){
+      throw NoRightException('방장 외에는 투표생성이 불가능합니다');
     }
 
     vote.meeting_id = meeting.id;
@@ -126,10 +132,10 @@ export class MeetingsVoteService {
     })
 
     //6. 로그인유저가 선택한 투표선택지 id 조회
-    
+
     //TODO 로그인 멤버의 id 조회
-    const member_id = 1;
-    fetchVote.user_choices = (await this.voteChoiceMemberRepository.find({where:{'member_id' : member_id}}))
+    const user_id = 1;
+    fetchVote.user_choices = (await this.voteChoiceMemberRepository.find({where:{'member_id' : user_id}}))
                 .map((vote_choice)=>{
                   return {id : vote_choice.vote_choice_id};
                 });
