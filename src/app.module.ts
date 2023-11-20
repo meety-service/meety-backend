@@ -4,12 +4,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TimezonesModule } from './timezones/timezones.module';
-import { MeetingsScheduleModules} from './meetings/schedule/meetings.schedule.module';
+import { MeetingsScheduleModules } from './meetings/schedule/meetings.schedule.module';
 import { UsersModule } from './users/users.module';
 import { MeetingsVoteModule } from './meetings/votes/meetings.vote.module';
 import { MeetingsModule } from './meetings/meetings.module';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { ServiceExceptionToHttpExceptionFilter } from './common/exception-filter/http-exception.filter';
+import { LoginModule } from './login/login.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ServiceExceptionToHttpExceptionFilter } from './common/exception-filter
     MeetingsVoteModule,
     UsersModule,
     MeetingsModule,
+    LoginModule,
     TypeOrmModule.forRoot({
       type: 'mysql', //Database 설정
       host: process.env.DB_HOST,
@@ -33,7 +35,8 @@ import { ServiceExceptionToHttpExceptionFilter } from './common/exception-filter
     }),
   ],
   controllers: [AppController],
-  providers: [AppService,
+  providers: [
+    AppService,
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,
