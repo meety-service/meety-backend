@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Vote } from 'src/entity/vote.entity';
 import { Repository } from 'typeorm';
-import { CreateVoteDto, FetchVoteDto, VoteChoiceRes } from './dto/vote.dto';
+import { CreateVoteDto, FetchVoteDto, VoteChoiceRes, VoteCloseDto } from './dto/vote.dto';
 import { VoteChoice } from 'src/entity/voteChoice.entity';
 import { Meeting } from 'src/entity/meeting.entity';
 import { EntityDuplicatedException, EntityNotFoundException, InvalidRequestException, NoRightException } from 'src/common/exception/service.exception';
@@ -233,6 +233,27 @@ export class MeetingsVoteService {
       await this.voteChoiceMemberRepository.save({vote_choice_id: user_choice.id, member_id:user_id});
     })
 
+  }
+
+  async closeVote(meeting_id : number, voteCloseDto : VoteCloseDto){
+    //TODO user_id 받아오기
+    const user_id = 1;
+
+    const meeting = await this.meetingRepository.findOne({where:{id:meeting_id}});
+    if (!meeting) {
+      throw EntityNotFoundException('미팅을 찾을 수 없습니다');
+    }
+    
+    const vote = await this.voteRepository.findOne({where:{meeting_id:meeting.id}});
+    if(!vote){
+      throw EntityNotFoundException('투표를 찾을 수 없습니다');    
+    }
+
+    if(meeting.member_id != user_id){
+      throw NoRightException('방장 외에는 투표마감이 불가능합니다');
+    }
+
+    await this.voteRepository.update({meeting_id: meeting_id},{close : voteCloseDto.close});
   }
 
 }

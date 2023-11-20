@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsNotEmpty, IsString, Matches, ArrayMinSize, ValidateNested } from "class-validator";
+import { IsNotEmpty, IsString, Matches, ArrayMinSize, ValidateNested, MATCHES, IsInt, Min, Max } from "class-validator";
 
 export class CreateVoteDto {
     @IsNotEmpty({
@@ -55,4 +55,11 @@ export class VoteChoiceRes{
     start_time : string;
     end_time : string;
     count : number;
+}
+
+export class VoteCloseDto{
+    @IsInt({ message: '마감여부를 올바르게 요청하지 않았습니다' })
+    @Min(0, { message: '마감여부를 올바르게 요청하지 않았습니다' })
+    @Max(1, { message: '마감여부를 올바르게 요청하지 않았습니다' })
+    close : number;
 }
