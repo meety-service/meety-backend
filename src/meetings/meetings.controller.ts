@@ -8,6 +8,7 @@ import {
   Body,
 } from '@nestjs/common';
 import { MeetingsService } from './meetings.service';
+import { MeetingDto } from './dto/meeting.dto';
 
 @Controller('meetings')
 export class MeetingsController {
@@ -28,14 +29,14 @@ export class MeetingsController {
     @Param('id') meetingId: number,
     @Body('list_visible') listVisible: number,
   ) {
-    const memberId = 1; // TODO: member Id를 request에서 파싱
+    const memberId = 1; // TODO: member id를 request에서 파싱
     return this.meetingsService.hideMeetingById(meetingId, memberId, listVisible);
   }
 
   @Post()
-  createMeeting() {
-    const success = this.meetingsService.createMeeting();
-    return { success };
+  createMeeting(@Body() meeting: MeetingDto) {
+    const managerId = 0; // TODO: member id를 request에서 파싱
+    return this.meetingsService.createMeeting(meeting, managerId);
   }
 
   @Get('/:id')
