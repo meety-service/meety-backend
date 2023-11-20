@@ -165,6 +165,11 @@ export class MeetingsVoteService {
       throw NoRightException('투표 참여 권한이 없습니다');
     }
 
+    //이미 마감된 투표일 때 예외처리
+    if(vote.close){
+      throw InvalidRequestException('이미 마감된 투표입니다');
+    }
+
     //올바른 투표선택지 id가 아닐 때 예외처리
     const vote_choices = (await this.voteRepository.findOne({where:{meeting_id:meeting_id}, relations:['vote_choices']})).vote_choices;
     userChoiceDto.vote_choices.forEach((user_choice)=>{
@@ -214,6 +219,11 @@ export class MeetingsVoteService {
     
     if(!hasRole){
       throw NoRightException('투표 참여 권한이 없습니다');
+    }
+
+    //이미 마감된 투표일 때 예외처리
+    if(vote.close){
+      throw InvalidRequestException('이미 마감된 투표입니다');
     }
 
     //올바른 투표선택지 id가 아닐 때 예외처리
