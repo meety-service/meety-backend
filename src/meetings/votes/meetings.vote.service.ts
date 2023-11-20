@@ -193,4 +193,46 @@ export class MeetingsVoteService {
     
   }
 
+
+  async updateUserChoice(meeting_id : number, userChoiceDto : UserChoiceDto){
+    //TODO user_id 받아오기
+    const user_id = 1;
+
+    const meeting = await this.meetingRepository.findOne({where:{id:meeting_id}});
+    if (!meeting) {
+      throw EntityNotFoundException('미팅을 찾을 수 없습니다');
+    }
+    
+    const vote = await this.voteRepository.findOne({where:{meeting_id:meeting.id}});
+    if(!vote){
+      throw EntityNotFoundException('투표를 찾을 수 없습니다');    
+    }
+
+    //투표 참여 권한이 없을 때 예외처리
+    const hasRole = (await this.meetingRepository.findOne({where:{id:meeting_id}, relations:['meeting_members']}))
+                .meeting_members.find((member)=>{return member.member_id == user_id;});
+    
+    if(!hasRole){
+      throw NoRightException('투표 참여 권한이 없습니다');
+    }
+
+    //올바른 투표선택지 id가 아닐 때 예외처리
+    const vote_choices = (await this.voteRepository.findOne({where:{meeting_id:meeting_id}, relations:['vote_choices']})).vote_choices;
+    userChoiceDto.vote_choices.forEach((user_choice)=>{
+      const isValid = vote_choices.find((vote_choice)=>{return vote_choice.id == user_choice.id;});
+      if(!isValid){
+        throw InvalidRequestException('선택한 투표선택지는 올바르지 않은 대상입니다.');
+      }
+    })
+
+    //이전 투표 지우기
+    await this.voteChoiceMemberRepository.delete({member_id:user_id});
+
+    //투표 저장하기
+    userChoiceDto.vote_choices.forEach(async (user_choice)=>{
+      await this.voteChoiceMemberRepository.save({vote_choice_id: user_choice.id, member_id:user_id});
+    })
+
+  }
+
 }
