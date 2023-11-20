@@ -81,7 +81,17 @@ export class MeetingsService {
     });
   }
 
-  getMeetingById(meetingId: number): Meeting {
-    return;
+  async getMeetingById(meetingId: number) {
+    const meeting = await this.meetings.findOne({ where: { id: meetingId } });
+    const meetingDates = await this.meetingDates.find({
+      where: { id: meetingId },
+    });
+
+    if (!meeting || !meetingDates)
+      throw EntityNotFoundException('미팅을 찾을 수 없습니다');
+
+    meeting.meeting_dates = meetingDates;
+
+    return meeting;
   }
 }
