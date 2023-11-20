@@ -8,6 +8,7 @@ import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { Member } from 'src/entity/member.entity';
 import { Timezone } from 'src/entity/timezone.entity';
 import { EntityNotFoundException } from 'src/common/exception/service.exception';
+import { AvailableDate } from './dto/availableDate.dto';
 
 @Injectable()
 export class MeetingsService {
@@ -61,9 +62,9 @@ export class MeetingsService {
       );
 
     const meetingResult = await this.meetings.insert({
+      name: meetingDto.name,
       member_id: manager.id,
       timezone_id: timezone.id,
-      name: meetingDto.name,
       start_time: meetingDto.start_time,
       end_time: meetingDto.end_time,
     });
@@ -73,12 +74,14 @@ export class MeetingsService {
     if (!meetingId)
       throw EntityNotFoundException('미팅이 올바르게 생성되지 않았습니다.');
 
-    meetingDto.available_date.map(async (availableDate) => {
+    meetingDto.available_dates.map(async (availableDate: AvailableDate) => {
       await this.meetingDates.insert({
         meeting_id: meetingId,
-        available_date: availableDate,
+        available_date: availableDate.date,
       });
     });
+
+    return meetingResult;
   }
 
   async getMeetingById(meetingId: number) {

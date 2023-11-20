@@ -30,13 +30,17 @@ export class MeetingsController {
     @Body('list_visible') listVisible: number,
   ) {
     const memberId = 1; // TODO: member id를 request에서 파싱
-    return this.meetingsService.hideMeetingById(meetingId, memberId, listVisible);
+    return this.meetingsService.hideMeetingById(
+      memberId,
+      meetingId,
+      listVisible,
+    );
   }
 
   @Post()
-  createMeeting(@Body() meeting: MeetingDto) {
-    const managerId = 0; // TODO: member id를 request에서 파싱
-    return this.meetingsService.createMeeting(meeting, managerId);
+  createMeeting(@Body() meetingDto: MeetingDto) {
+    const managerId = 1; // TODO: member id를 request에서 파싱
+    return this.meetingsService.createMeeting(meetingDto, managerId);
   }
 
   @Get('/:id')
