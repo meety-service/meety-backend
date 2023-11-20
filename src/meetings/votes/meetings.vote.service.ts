@@ -8,6 +8,7 @@ import { Meeting } from 'src/entity/meeting.entity';
 import { EntityDuplicatedException, EntityNotFoundException, InvalidRequestException, NoRightException } from 'src/common/exception/service.exception';
 import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { VoteChoiceMember } from 'src/entity/voteChoiceMember.entity';
+import { UserChoiceDto } from './dto/vote.choice.dto';
 
 @Injectable()
 export class MeetingsVoteService {
@@ -140,6 +141,56 @@ export class MeetingsVoteService {
                   return {id : vote_choice.vote_choice_id};
                 });
     return fetchVote;
+  }
+
+  async createUserChoice(meeting_id : number, userChoiceDto : UserChoiceDto){
+    //TODO user_id 받아오기
+    const user_id = 1;
+
+    const meeting = await this.meetingRepository.findOne({where:{id:meeting_id}});
+    if (!meeting) {
+      throw EntityNotFoundException('미팅을 찾을 수 없습니다');
+    }
+    
+    const vote = await this.voteRepository.findOne({where:{meeting_id:meeting.id}});
+    if(!vote){
+      throw EntityNotFoundException('투표를 찾을 수 없습니다');    
+    }
+
+    //투표 참여 권한이 없을 때 예외처리
+    const hasRole = (await this.meetingRepository.findOne({where:{id:meeting_id}, relations:['meeting_members']}))
+                .meeting_members.find((member)=>{return member.member_id == user_id;});
+    
+    if(!hasRole){
+      throw NoRightException('투표 참여 권한이 없습니다');
+    }
+
+    //올바른 투표선택지 id가 아닐 때 예외처리
+    const vote_choices = (await this.voteRepository.findOne({where:{meeting_id:meeting_id}, relations:['vote_choices']})).vote_choices;
+    userChoiceDto.vote_choices.forEach((user_choice)=>{
+      const isValid = vote_choices.find((vote_choice)=>{return vote_choice.id == user_choice.id;});
+      if(!isValid){
+        throw InvalidRequestException('선택한 투표선택지는 올바르지 않은 대상입니다.');
+      }
+    })
+
+    //이미 참여한 투표일때 예외처리
+    const user_choices =  await this.voteChoiceMemberRepository.query(`SELECT * FROM vote_choice
+        JOIN vote_choice_member ON vote_choice.id = vote_choice_member.vote_choice_id
+        WHERE vote_choice.vote_id = ? AND vote_choice_member.member_id = ?;`,
+        [vote.id, user_id]);
+    
+
+    if(user_choices?.length){
+      throw EntityDuplicatedException('이미 투표한 유저입니다.');
+    }
+
+    //투표 저장하기
+    userChoiceDto.vote_choices.forEach(async (user_choice)=>{
+      await this.voteChoiceMemberRepository.save({vote_choice_id: user_choice.id, member_id:user_id});
+    })
+
+    
   }
 
 }
