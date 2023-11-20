@@ -5,12 +5,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Vote } from 'src/entity/vote.entity';
 import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { Meeting } from 'src/entity/meeting.entity';
+import { VoteChoice } from 'src/entity/voteChoice.entity';
+import { VoteChoiceMember } from 'src/entity/voteChoiceMember.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       Vote,
-      Meeting
+      Meeting,
+      MeetingDate,
+      VoteChoiceMember,
     ]),
   ],
   controllers: [MeetingsVoteController],

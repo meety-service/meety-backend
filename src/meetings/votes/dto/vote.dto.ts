@@ -15,7 +15,7 @@ export class CreateVoteDto {
 
 export class VoteChoice {
     @Matches(/^\d{4}-\d{2}-\d{2}$/,{
-        message: "올바른 형식의 날짜를 입력해주세요.",
+        message: "올바른 형식의 날짜가 아닙니다",
     })
     date: string;
 
@@ -38,4 +38,21 @@ export class TimeRange {
         message: "올바른 형식의 시간을 입력해주세요."
     })
     end_time: string;
+}
+
+export class FetchVoteDto{
+    members : number;
+    participants : number;
+    close : number;
+    vote_choices : VoteChoiceRes[];
+    largest_choices : VoteChoiceRes[];
+    user_choices : {id : number}[];
+}
+
+export class VoteChoiceRes{
+    id : number;
+    date : string;
+    start_time : string;
+    end_time : string;
+    count : number;
 }
