@@ -47,4 +47,14 @@ export class MeetingsController {
   getMeetingById(@Param('id') meetingId: number) {
     return this.meetingsService.getMeetingById(meetingId);
   }
+
+  @Post('/test/member')
+  createMember(@Body('email') email: string) {
+    return this.meetingsService.insertMember(email);
+  }
+
+  @Post('/test/timezone')
+  createTimezone(@Body('name') name: string) {
+    return this.meetingsService.insertTimezone(name);
+  }
 }

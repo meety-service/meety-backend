@@ -97,4 +97,26 @@ export class MeetingsService {
 
     return meeting;
   }
+
+  generateRandomString(length: number): string {
+    let result = '';
+    let characters =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  }
+
+  async insertMember(email: string) {
+    return await this.members.insert({
+      token: this.generateRandomString(10),
+      email,
+    });
+  }
+
+  async insertTimezone(name: string) {
+    return await this.timezones.insert({ name });
+  }
 }
