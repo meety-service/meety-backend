@@ -49,6 +49,7 @@ export class MeetingsController {
     return this.meetingsService.getMeetingById(meetingId);
   }
 
+  // for test
   @Post('/test/member')
   createMember(@Body('email') email: string) {
     return this.meetingsService.insertMember(email);
@@ -59,9 +60,8 @@ export class MeetingsController {
     return this.meetingsService.insertTimezone(name);
   }
 
-  // for test
-  @Get('/all')
-  getAllMeeting(){
+  @Get('/test/all')
+  getAllMeeting() {
     return this.meetingsService.getAllMeetings();
   }
 }
