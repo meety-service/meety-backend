@@ -55,7 +55,7 @@ export class MeetingsService {
       where: { id: meetingId },
     });
     if (!targetMeeting)
-      throw new HttpException('Meeting Not Found', HttpStatus.NOT_FOUND);
+      throw EntityNotFoundException('해당되는 미팅 ID를 찾을 수 없습니다.');
 
     await this.meetings.delete({ id: meetingId });
   }
@@ -119,7 +119,7 @@ export class MeetingsService {
     });
 
     if (!meeting || !meetingDates)
-      throw EntityNotFoundException('미팅을 찾을 수 없습니다');
+      throw EntityNotFoundException('해당되는 미팅 ID를 찾을 수 없습니다.');
 
     meeting.meeting_dates = meetingDates;
 
