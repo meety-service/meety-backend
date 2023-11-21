@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityNotFoundException } from 'src/common/exception/service.exception';
 import { Meeting } from 'src/entity/meeting.entity';
@@ -31,36 +31,41 @@ export class MeetingsScheduleService {
     const meetingMember = await this.meetingMembers.findOne({
       where: { member_id: memberId, meeting_id: meetingId },
     });
-
     if (!meetingMember)
       throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
 
-    await this.meetingMembers.save({
-      meeting_id: meetingId,
-      member_id: memberId,
-      nickname: scheduleDto.nickname,
-      list_visible: 1,
-    });
-    
+    await this.meetingMembers.update(
+      { meeting_id: meetingId, member_id: memberId },
+      { nickname: scheduleDto.nickname },
+    );
+
     const availableMeetingDates = await this.meetingDates.find({
       where: { meeting_id: meetingMember.meeting_id },
     });
 
     // TODO: 더 간단한 로직으로
-    availableMeetingDates.forEach(async (date) => {
-      scheduleDto.selected_items.forEach(async (item) => {
-        if (item.date === date.available_date) {
-          item.times.forEach(async (time) => {
-            await this.selectTimetables.insert({
-              meeting_id: meetingMember.meeting_id,
-              member_id: meetingMember.member_id,
-              meeting_date_id: date.id,
-              select_time: time,
-            });
-          });
-        }
-      });
-    });
+    await Promise.all(
+      availableMeetingDates.map(async (date) => {
+        return Promise.all(
+          scheduleDto.select_times.map(async (item) => {
+            if (item.date === date.available_date) {
+              return Promise.all(
+                item.times.map(async (time) => {
+                  Logger.debug('time: ' + JSON.stringify(time.time));
+
+                  await this.selectTimetables.insert({
+                    meeting_id: meetingMember.meeting_id,
+                    member_id: meetingMember.member_id,
+                    meeting_date_id: date.id,
+                    select_time: time.time,
+                  });
+                }),
+              );
+            }
+          }),
+        );
+      }),
+    );
   }
 
   async getPersonalSchedules(
@@ -86,26 +91,34 @@ export class MeetingsScheduleService {
       where: { meeting_id: meetingId, member_id: memberId },
     });
 
-    const selectedItems: SelectTimetableDto[] = availableMeetingDates.map(
-      (availableDate) => {
+    const selectedItems: SelectTimetableDto[] = availableMeetingDates
+      .map((availableDate) => {
         const times = selectTimetable
           .filter((time) => time.meeting_date_id == availableDate.id)
           .map((time) => {
-            return time.select_time;
+            return { time: time.select_time };
           });
         return {
           date: availableDate.available_date,
           times: times,
         };
-      },
-    );
+      })
+      .filter((item) => item.times.length > 0);
 
     const response: ScheduleDto = {
       nickname: meetingMember.nickname,
-      selected_items: selectedItems,
+      select_times: selectedItems,
     };
 
     return response;
+  }
+
+  isDateInRange(date: string, startDate: string, endDate: string): boolean {
+    const dateMs = new Date(date).getTime();
+    const startMs = new Date(startDate).getTime();
+    const endMs = new Date(endDate).getTime();
+
+    return dateMs >= startMs && dateMs <= endMs;
   }
 
   async updateSchedules(
