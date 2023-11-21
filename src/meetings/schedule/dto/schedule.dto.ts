@@ -1,5 +1,3 @@
-import { MeetingDate } from "src/entity/meetingDate.entity";
-
 export class SelectTimetableDto {
     date: string;
     times: string[];
