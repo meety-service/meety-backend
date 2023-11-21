@@ -102,7 +102,7 @@ export class MeetingsService {
       });
     });
 
-    this.meetingMembers.insert({
+    await this.meetingMembers.insert({
       meeting_id: meetingId,
       member_id: managerId,
       nickname: '',
