@@ -15,8 +15,9 @@ export class MeetingsController {
   constructor(private readonly meetingsService: MeetingsService) {}
 
   @Get()
-  getMeetings() {
-    return this.meetingsService.getMeetings();
+  getMeetingsFromMainScreen() {
+    const memberId = 1; // TODO: member id를 request에서 파싱
+    return this.meetingsService.getMeetingsFromMainScreen(memberId);
   }
 
   @Delete('/:id')
@@ -56,5 +57,11 @@ export class MeetingsController {
   @Post('/test/timezone')
   createTimezone(@Body('name') name: string) {
     return this.meetingsService.insertTimezone(name);
+  }
+
+  // for test
+  @Get('/all')
+  getAllMeeting(){
+    return this.meetingsService.getAllMeetings();
   }
 }
