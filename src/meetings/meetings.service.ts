@@ -100,6 +100,13 @@ export class MeetingsService {
       });
     });
 
+    this.meetingMembers.insert({
+      meeting_id: meetingId,
+      member_id: managerId,
+      nickname: '',
+      list_visible: 1,
+    });
+
     return meetingResult;
   }
 
