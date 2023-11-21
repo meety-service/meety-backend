@@ -10,8 +10,7 @@ export class MeetingsScheduleController {
   @Post()
   createSchedules(@Param('id') meetingId: number, @Body() scheduleDto: ScheduleDto) {
     const memberId = 2;
-    const success = this.MeetingsScheduleService.createSchedules(meetingId, memberId, scheduleDto);
-    return { success };
+    return this.MeetingsScheduleService.createSchedules(meetingId, memberId, scheduleDto);
   }
 
   @Get()
@@ -25,11 +24,12 @@ export class MeetingsScheduleController {
     @Param('id') meetingId: number,
     @Body() newSchedule: ScheduleDto,
   ) {
-    const success = this.MeetingsScheduleService.updateSchedules(
+    const memberId = 2;
+    return this.MeetingsScheduleService.updateSchedules(
       meetingId,
+      memberId,
       newSchedule,
     );
-    return { success };
   }
 
   @Get('/all')

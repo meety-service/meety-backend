@@ -102,8 +102,40 @@ export class MeetingsScheduleService {
     return response;
   }
 
-  updateSchedules(meetingId: number, newSchedule: ScheduleDto): boolean {
-    return false;
+  async updateSchedules(
+    meetingId: number,
+    memberId: number,
+    newSchedule: ScheduleDto,
+  ) {
+    const meetingMember = await this.meetingMembers.findOne({
+      where: { member_id: memberId, meeting_id: meetingId },
+    });
+    if (!meetingMember)
+      throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
+
+    const availableMeetingDates = await this.meetingDates.find({
+      where: { meeting_id: meetingMember.meeting_id },
+    });
+
+    // TODO: 더 간단한 로직으로
+    availableMeetingDates.forEach(async (date) => {
+      newSchedule.selected_items.forEach(async (item) => {
+        if (item.date === date.available_date) {
+          item.times.forEach(async (time) => {
+            await this.selectTimetables.update(
+              {
+                meeting_id: meetingMember.meeting_id,
+                member_id: meetingMember.member_id,
+                meeting_date_id: date.id,
+              },
+              {
+                select_time: time,
+              },
+            );
+          });
+        }
+      });
+    });
   }
 
   getAllSchedules(meetingId: number): ScheduleDto[] {
