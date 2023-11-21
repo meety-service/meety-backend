@@ -138,7 +138,139 @@ export class MeetingsScheduleService {
     });
   }
 
-  getAllSchedules(meetingId: number): ScheduleDto[] {
-    return [];
+  generateAvailableTimetable(startTime: string, endTime: string): string[] {
+    let resultTimetable: string[] = [];
+    let current = new Date(`1970-01-01T${startTime}Z`);
+    let end = new Date(`1970-01-01T${endTime}Z`);
+
+    while (current <= end) {
+      let hours = String(current.getUTCHours()).padStart(2, '0');
+      let minutes = String(current.getUTCMinutes()).padStart(2, '0');
+      let seconds = String(current.getUTCSeconds()).padStart(2, '0');
+
+      resultTimetable.push(`${hours}:${minutes}:${seconds}`);
+      current.setUTCMinutes(current.getUTCMinutes() + 30);
+    }
+
+    return resultTimetable;
+  }
+
+  async getAllSchedules(meetingId: number) {
+    /*
+    {
+      "members" : 3,
+      "schedules" : [{"date" : "2023-11-02", 
+                      "times" :
+                        [{"time" : "12:00:00", "available" : [{"nickname" : "아무개"}, {"nickname" : "김아무개"}], "unavailable" : [{"nickname" : "박아무개"}]},
+                        {"time" : "12:30:00", "available" : [{"nickname" : "아무개"}, {"nickname" : "김아무개"}, {"nickname" : "박아무개"}], "unavailable" : []}],
+                    {"date" : "2023-11-03", 
+                     "times" :
+                      [{"time" : "12:00:00", "available" : [{"nickname" : "아무개"}, {"nickname" : "김아무개"}], "unavailable" : [{"nickname" : "박아무개"}]},
+                      {"time" : "12:30:00", "available" : [{"nickname" : "박아무개"}], "unavailable" : [{"nickname" : "아무개"}, {"nickname" : "김아무개"}]}]
+      }]
+    }
+    */
+
+    // 1. meeting에 참여하는 member 파싱
+    // 2. meeting의 start_time, end_time 파싱
+    // 3. start_time ~ end_time까지 30분 단위로 배열 생성
+    // 4. meeting의 available date 배열을 찾음
+    // 5. available date 배열을 순회하면서
+
+    const meetingMembers = await this.meetingMembers.find({
+      where: { meeting_id: meetingId },
+    });
+    const meeting = await this.meetings.findOne({ where: { id: meetingId } });
+
+    if (!meetingMembers || !meeting)
+      throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
+
+    const availableTimetables = this.generateAvailableTimetable(
+      meeting.start_time,
+      meeting.end_time,
+    );
+
+    const availableMeetingDates = await this.meetingDates.find({
+      where: { meeting_id: meeting.id },
+    });
+
+    if (!availableMeetingDates)
+      throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
+
+    // 각 member 별, 각 date별, 가능한 시작 시간 unit들을 모은 객체 배열.
+    const availableSchedulesForMember = await Promise.all(
+      meetingMembers.map(async (member) => {
+        const selectedTimesForDates = await Promise.all(
+          availableMeetingDates.map(async (date) => {
+            // 해당 date에 대해, 해당 member가 고른 시간들을 넣어줌
+            const selectedTimesFromDB = await this.selectTimetables.find({
+              where: {
+                meeting_id: meetingId,
+                member_id: member.meeting_id,
+                meeting_date_id: date.id,
+              },
+            });
+
+            if (!selectedTimesFromDB)
+              return { date: date.available_date, times: [] };
+
+            const selectedTimes = selectedTimesFromDB.map((time) => {
+              return { time: time.select_time };
+            });
+
+            return { date: date.available_date, times: selectedTimes };
+          }),
+        );
+
+        return { member, selectedTimesForDates };
+      }),
+    );
+
+    // generate schedules
+    const schedules = availableMeetingDates.map((meetingDate) => {
+      const currentDate = meetingDate.available_date;
+
+      const times = availableTimetables.map((timetable) => {
+        // 각 timetable 별 작업 수행
+        const available = [];
+        const unavailable = [];
+
+        availableSchedulesForMember.forEach((memberSchedules) => {
+          // 각 member 별, 각 date 별 필터링
+          const selectedTimesForDate =
+            memberSchedules.selectedTimesForDates.find(
+              (selectedTimesForDate) =>
+                selectedTimesForDate.date === currentDate,
+            );
+
+          if (!selectedTimesForDate)
+            unavailable.push({ nickname: memberSchedules.member.nickname });
+          else {
+            // 해당하는 date가 있음, timetable을 찾아야함.
+
+            const availableTime = selectedTimesForDate.times.find(
+              (time) => time.time === timetable,
+            );
+
+            if (!availableTime)
+              unavailable.push({ nickname: memberSchedules.member.nickname });
+            else available.push({ nickname: memberSchedules.member.nickname });
+          }
+        });
+
+        return {
+          time: timetable,
+          available,
+          unavailable,
+        };
+      });
+
+      return {
+        date: currentDate,
+        times,
+      };
+    });
+
+    return { members: meetingMembers.length, schedules };
   }
 }
