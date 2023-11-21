@@ -42,10 +42,12 @@ export class MeetingsService {
       return {
         id: meeting.id,
         name: meeting.name,
-        isMaster: meeting.member_id === meetingWithMember.member_id ? 1: 0,
+        isMaster: meeting.member_id === meetingWithMember.member_id ? 1 : 0,
         user_status: 0, // TODO: ERD에 추가
-      }
+      };
     });
+
+    return meetings;
   }
 
   async deleteMeetingById(meetingId: number) {
