@@ -4,7 +4,6 @@ import { EntityNotFoundException } from 'src/common/exception/service.exception'
 import { Meeting } from 'src/entity/meeting.entity';
 import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { MeetingMember } from 'src/entity/meetingMember.entity';
-import { Member } from 'src/entity/member.entity';
 import { SelectTimetable } from 'src/entity/selectTimetable.entity';
 import {
   ScheduleDto,
@@ -16,10 +15,9 @@ import { Repository } from 'typeorm';
 export class MeetingsScheduleService {
   constructor(
     @InjectRepository(Meeting) private meetings: Repository<Meeting>,
-    @InjectRepository(Member) private members: Repository<Member>,
     @InjectRepository(MeetingMember)
     private meetingMembers: Repository<MeetingMember>,
-    @InjectRepository(Member)
+    @InjectRepository(SelectTimetable)
     private selectTimetables: Repository<SelectTimetable>,
     @InjectRepository(MeetingDate)
     private meetingDates: Repository<MeetingDate>,
