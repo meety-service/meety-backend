@@ -8,8 +8,9 @@ export class MeetingsScheduleController {
   ) {}
 
   @Post()
-  createSchedules(@Param('id') meetingId: number) {
-    const success = this.MeetingsScheduleService.createSchedules(meetingId);
+  createSchedules(@Param('id') meetingId: number, @Body() scheduleDto: ScheduleDto) {
+    const memberId = 2;
+    const success = this.MeetingsScheduleService.createSchedules(meetingId, memberId, scheduleDto);
     return { success };
   }
 
