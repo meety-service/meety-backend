@@ -34,18 +34,20 @@ export class MeetingsService {
     const meetingWithMembers = await this.meetingMembers.find({
       where: { member_id: memberId },
     });
-    const meetings = meetingWithMembers.map(async (meetingWithMember) => {
-      const meeting = await this.meetings.findOne({
-        where: { id: meetingWithMember.meeting_id },
-      });
+    const meetings = await Promise.all(
+      meetingWithMembers.map(async (meetingWithMember) => {
+        const meeting = await this.meetings.findOne({
+          where: { id: meetingWithMember.meeting_id },
+        });
 
-      return {
-        id: meeting.id,
-        name: meeting.name,
-        isMaster: meeting.member_id === meetingWithMember.member_id ? 1 : 0,
-        user_status: 0, // TODO: ERD에 추가
-      };
-    });
+        return {
+          id: meeting.id,
+          name: meeting.name,
+          isMaster: meeting.member_id === meetingWithMember.member_id ? 1 : 0,
+          user_status: 0, // TODO: ERD에 추가
+        };
+      }),
+    );
 
     return meetings;
   }
@@ -69,6 +71,22 @@ export class MeetingsService {
       { meeting_id: meetingId, member_id: memberId },
       { list_visible: listVisible },
     );
+  }
+
+  generateDateList(startDate: string, endDate: string): string[] {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const dateList: string[] = [];
+  
+    for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+  
+      dateList.push(`${year}-${month}-${day}`);
+    }
+  
+    return dateList;
   }
 
   async createMeeting(meetingDto: MeetingDto, managerId: number) {
@@ -95,10 +113,11 @@ export class MeetingsService {
     if (!meetingId)
       throw EntityNotFoundException('미팅이 올바르게 생성되지 않았습니다.');
 
-    meetingDto.available_dates.map(async (availableDate: AvailableDate) => {
+    const dateList = this.generateDateList(meetingDto.available_dates[0].date, meetingDto.available_dates[1].date);
+    dateList.map(async (availableDate: string) => {
       await this.meetingDates.insert({
         meeting_id: meetingId,
-        available_date: availableDate.date,
+        available_date: availableDate,
       });
     });
 
