@@ -31,9 +31,17 @@ export class MeetingsScheduleService {
     const meetingMember = await this.meetingMembers.findOne({
       where: { member_id: memberId, meeting_id: meetingId },
     });
+
     if (!meetingMember)
       throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
 
+    await this.meetingMembers.save({
+      meeting_id: meetingId,
+      member_id: memberId,
+      nickname: scheduleDto.nickname,
+      list_visible: 1,
+    });
+    
     const availableMeetingDates = await this.meetingDates.find({
       where: { meeting_id: meetingMember.meeting_id },
     });
