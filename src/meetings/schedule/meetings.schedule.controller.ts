@@ -9,13 +9,13 @@ export class MeetingsScheduleController {
 
   @Post()
   createSchedules(@Param('id') meetingId: number, @Body() scheduleDto: ScheduleDto) {
-    const memberId = 2;
+    const memberId = 1;
     return this.MeetingsScheduleService.createSchedules(meetingId, memberId, scheduleDto);
   }
 
   @Get()
   getPersonalSchedules(@Param('id') meetingId: number) {
-    const memberId = 2;
+    const memberId = 1;
     return this.MeetingsScheduleService.getPersonalSchedules(meetingId, memberId);
   }
 
@@ -24,7 +24,7 @@ export class MeetingsScheduleController {
     @Param('id') meetingId: number,
     @Body() newSchedule: ScheduleDto,
   ) {
-    const memberId = 2;
+    const memberId = 1;
     return this.MeetingsScheduleService.updateSchedules(
       meetingId,
       memberId,
