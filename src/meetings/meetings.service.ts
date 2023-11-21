@@ -25,8 +25,27 @@ export class MeetingsService {
     private timezones: Repository<Timezone>,
   ) {}
 
-  async getMeetings(): Promise<Meeting[]> {
+  // for test
+  async getAllMeetings(): Promise<Meeting[]> {
     return await this.meetings.find();
+  }
+
+  async getMeetingsFromMainScreen(memberId: number) {
+    const meetingWithMembers = await this.meetingMembers.find({
+      where: { member_id: memberId },
+    });
+    const meetings = meetingWithMembers.map(async (meetingWithMember) => {
+      const meeting = await this.meetings.findOne({
+        where: { id: meetingWithMember.meeting_id },
+      });
+
+      return {
+        id: meeting.id,
+        name: meeting.name,
+        isMaster: meeting.member_id === meetingWithMember.member_id ? 1: 0,
+        user_status: 0, // TODO: ERD에 추가
+      }
+    });
   }
 
   async deleteMeetingById(meetingId: number) {
