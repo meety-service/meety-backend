@@ -16,7 +16,8 @@ export class MeetingsScheduleController {
 
   @Get()
   getPersonalSchedules(@Param('id') meetingId: number) {
-    return this.MeetingsScheduleService.getPersonalSchedules(meetingId);
+    const memberId = 2;
+    return this.MeetingsScheduleService.getPersonalSchedules(meetingId, memberId);
   }
 
   @Put()
