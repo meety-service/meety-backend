@@ -135,6 +135,8 @@ export class MeetingsService {
   }
 
   async getMeetingById(meetingId: number) {
+    const memberId = 1; // TODO: member id 수정
+
     const meeting = await this.meetings.findOne({ where: { id: meetingId } });
     const meetingDates = await this.meetingDates.find({
       where: { id: meetingId },
@@ -143,8 +145,13 @@ export class MeetingsService {
     if (!meeting || !meetingDates)
       throw EntityNotFoundException('해당되는 미팅 ID를 찾을 수 없습니다.');
 
+    const member = await this.meetingMembers.findOne({
+      where: { meeting_id: meetingId, member_id: memberId },
+    });
+
     meeting.meeting_dates = meetingDates;
 
+    return { ...meeting, user_state: member ? member.user_state : -1 };
   }
 
   async validateUserState(meetingId: number, oldUserState: number) {

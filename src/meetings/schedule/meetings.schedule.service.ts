@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityNotFoundException } from 'src/common/exception/service.exception';
+import { EntityNotFoundException, InvalidRequestException } from 'src/common/exception/service.exception';
 import { Meeting } from 'src/entity/meeting.entity';
 import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { MeetingMember } from 'src/entity/meetingMember.entity';
@@ -33,7 +33,9 @@ export class MeetingsScheduleService {
     });
     if (!meetingMember)
       throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
-
+    if (meetingMember.user_state > 1) 
+      throw InvalidRequestException('잘못된 user state 값입니다.');
+    
     await this.meetingMembers.update(
       { meeting_id: meetingId, member_id: memberId },
       { nickname: scheduleDto.nickname, user_state: 1 },
