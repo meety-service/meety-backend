@@ -8,6 +8,7 @@ import { Meeting } from 'src/entity/meeting.entity';
 import { MeetingMember } from 'src/entity/meetingMember.entity';
 import { SelectTimetable } from 'src/entity/selectTimetable.entity';
 import { MeetingDate } from 'src/entity/meetingDate.entity';
+import { Member } from 'src/entity/member.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { MeetingDate } from 'src/entity/meetingDate.entity';
       MeetingMember,
       SelectTimetable,
       MeetingDate,
+      Member
     ]),
   ],
   controllers: [MeetingsScheduleController],

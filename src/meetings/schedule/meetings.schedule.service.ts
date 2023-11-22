@@ -7,8 +7,10 @@ import {
 import { Meeting } from 'src/entity/meeting.entity';
 import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { MeetingMember } from 'src/entity/meetingMember.entity';
-import { SelectTimetable} from 'src/entity/selectTimetable.entity';
+import { Member } from 'src/entity/member.entity';
+import { SelectTimetable } from 'src/entity/selectTimetable.entity';
 import {
+  AllScheduleDateDto,
   ScheduleDto,
   SelectTimetableDto,
 } from 'src/meetings/schedule/dto/schedule.dto';
@@ -24,6 +26,8 @@ export class MeetingsScheduleService {
     private selectTimetables: Repository<SelectTimetable>,
     @InjectRepository(MeetingDate)
     private meetingDates: Repository<MeetingDate>,
+    @InjectRepository(Member)
+    private members: Repository<Member>,
   ) {}
 
   async createSchedules(
@@ -31,11 +35,27 @@ export class MeetingsScheduleService {
     memberId: number,
     scheduleDto: ScheduleDto,
   ) {
-    const meetingMember = await this.meetingMembers.findOne({
+    let meetingMember = await this.meetingMembers.findOne({
       where: { member_id: memberId, meeting_id: meetingId },
     });
-    if (!meetingMember)
-      throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
+
+    // URL을 공유 받아서 새롭게 미팅에 참여하는 경우 새롭게 멤버를 meeting_member에 추가
+    if (!meetingMember) {
+      const member = await this.members.findOne({ where: { id: memberId } });
+
+      // 단, 멤버가 존재하지 않으면 Exception 발생
+      if (!member)
+        throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
+
+      meetingMember = await this.meetingMembers.save({
+        meeting_id: meetingId,
+        member_id: memberId,
+        nickname: scheduleDto.nickname,
+        list_visible: 1,
+      });
+    }
+
+    // user state가 투표 단계로 넘어간 경우 스케줄 생성 불가
     if (meetingMember.user_state > 1)
       throw InvalidRequestException('잘못된 user state 값입니다.');
 
@@ -43,6 +63,12 @@ export class MeetingsScheduleService {
       { meeting_id: meetingId, member_id: memberId },
       { nickname: scheduleDto.nickname, user_state: 1 },
     );
+
+    // update는 update함수를 통해 이루어지지만, 클라이언트에서 잘못 호출하거나 닉네임 변경 등이 필요할 때
+    await this.selectTimetables.delete({
+      meeting_id: meetingId,
+      member_id: memberId,
+    });
 
     const availableMeetingDates = await this.meetingDates.find({
       where: { meeting_id: meetingMember.meeting_id },
@@ -53,7 +79,6 @@ export class MeetingsScheduleService {
         const dateId = availableMeetingDates.find(
           (date) => date.available_date === timetable.date,
         ).id;
-
         return Promise.all(
           timetable.times.map(async (time) => {
             await this.selectTimetables.insert({
@@ -128,31 +153,36 @@ export class MeetingsScheduleService {
     if (!meetingMember)
       throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
 
+    // user state가 투표 단계로 넘어간 경우 스케줄 생성 불가
+    if (meetingMember.user_state > 1)
+      throw InvalidRequestException('잘못된 user state 값입니다.');
+
     const availableMeetingDates = await this.meetingDates.find({
       where: { meeting_id: meetingMember.meeting_id },
     });
 
     let schedules: SelectTimetable[] = [];
 
-    newSchedule.select_times.map((date)=>{
+    newSchedule.select_times.map((date) => {
       //스케줄의 날짜가 범위내의 날짜 인지 확인
-      const meetingDate = availableMeetingDates.find(availableDate => {return availableDate.available_date == date.date;});
-      
-      if(!meetingDate){
+      const meetingDate = availableMeetingDates.find((availableDate) => {
+        return availableDate.available_date == date.date;
+      });
+
+      if (!meetingDate) {
         throw InvalidRequestException('가능한 미팅 날짜 범위 밖입니다');
       }
 
       //해당 날짜의 timetable을 임시변수에 추가
-      date.times.map((time)=>{
+      date.times.map((time) => {
         const selectTimetable = new SelectTimetable();
         selectTimetable.meeting_id = meetingId;
         selectTimetable.meeting_date_id = meetingDate.id;
         selectTimetable.member_id = memberId;
         selectTimetable.select_time = time.time;
         schedules.push(selectTimetable);
-      })
-
-    })
+      });
+    });
 
     //member 닉네임 업데이트
     await this.meetingMembers.update(
@@ -161,11 +191,13 @@ export class MeetingsScheduleService {
     );
 
     //기존 스케줄 삭제
-    await this.selectTimetables.delete({member_id: memberId, meeting_id: meetingId});
+    await this.selectTimetables.delete({
+      member_id: memberId,
+      meeting_id: meetingId,
+    });
 
     //스케줄 업데이트
     await this.selectTimetables.save(schedules);
-      
   }
 
   generateAvailableTimetable(startTime: string, endTime: string): string[] {
@@ -186,27 +218,6 @@ export class MeetingsScheduleService {
   }
 
   async getAllSchedules(meetingId: number) {
-    /*
-    {
-      "members" : 3,
-      "schedules" : [{"date" : "2023-11-02", 
-                      "times" :
-                        [{"time" : "12:00:00", "available" : [{"nickname" : "아무개"}, {"nickname" : "김아무개"}], "unavailable" : [{"nickname" : "박아무개"}]},
-                        {"time" : "12:30:00", "available" : [{"nickname" : "아무개"}, {"nickname" : "김아무개"}, {"nickname" : "박아무개"}], "unavailable" : []}],
-                    {"date" : "2023-11-03", 
-                     "times" :
-                      [{"time" : "12:00:00", "available" : [{"nickname" : "아무개"}, {"nickname" : "김아무개"}], "unavailable" : [{"nickname" : "박아무개"}]},
-                      {"time" : "12:30:00", "available" : [{"nickname" : "박아무개"}], "unavailable" : [{"nickname" : "아무개"}, {"nickname" : "김아무개"}]}]
-      }]
-    }
-    */
-
-    // 1. meeting에 참여하는 member 파싱
-    // 2. meeting의 start_time, end_time 파싱
-    // 3. start_time ~ end_time까지 30분 단위로 배열 생성
-    // 4. meeting의 available date 배열을 찾음
-    // 5. available date 배열을 순회하면서
-
     const meetingMembers = await this.meetingMembers.find({
       where: { meeting_id: meetingId },
     });
@@ -215,92 +226,102 @@ export class MeetingsScheduleService {
     if (!meetingMembers || !meeting)
       throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
 
-    const availableTimetables = this.generateAvailableTimetable(
+    const availableTimetablesDuration = this.generateAvailableTimetable(
       meeting.start_time,
       meeting.end_time,
     );
 
-    const availableMeetingDates = await this.meetingDates.find({
+    const availableMeetingDatesDuration = await this.meetingDates.find({
       where: { meeting_id: meeting.id },
     });
 
-    if (!availableMeetingDates)
+    if (!availableMeetingDatesDuration)
       throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
 
-    // 각 member 별, 각 date별, 가능한 시작 시간 unit들을 모은 객체 배열.
-    const availableSchedulesForMember = await Promise.all(
-      meetingMembers.map(async (member) => {
-        const selectedTimesForDates = await Promise.all(
-          availableMeetingDates.map(async (date) => {
-            // 해당 date에 대해, 해당 member가 고른 시간들을 넣어줌
-            const selectedTimesFromDB = await this.selectTimetables.find({
-              where: {
-                meeting_id: meetingId,
-                member_id: member.meeting_id,
-                meeting_date_id: date.id,
-              },
-            });
+    const selectTimetablesFromDB = await this.selectTimetables
+      .createQueryBuilder('select_timetable')
+      .innerJoinAndSelect('select_timetable.meeting_date', 'meeting_date')
+      .select([
+        'meeting_date.available_date',
+        'select_timetable.member_id',
+        'select_timetable.select_time',
+      ])
+      .where('select_timetable.meeting_id = :meetingId', { meetingId })
+      .orderBy('meeting_date.available_date')
+      .addOrderBy('select_timetable.select_time')
+      .getMany();
 
-            if (!selectedTimesFromDB)
-              return { date: date.available_date, times: [] };
+    if (selectTimetablesFromDB.length === 0) {
+      return { members: meetingMembers.length, schedules: [] };
+    }
 
-            const selectedTimes = selectedTimesFromDB.map((time) => {
-              return { time: time.select_time };
-            });
+    const reducedSelectTimetablesFromDB = selectTimetablesFromDB.reduce(
+      (acc, cur) => {
+        const date = cur.meeting_date.available_date;
+        const time = cur.select_time;
 
-            return { date: date.available_date, times: selectedTimes };
-          }),
-        );
-
-        return { member, selectedTimesForDates };
-      }),
+        if (!acc[date]) {
+          acc[date] = {};
+        }
+        if (!acc[date][time]) {
+          acc[date][time] = [];
+        }
+        acc[date][time].push({ member_id: cur.member_id });
+        return acc;
+      },
+      {} as Record<string, Record<string, { member_id: number }[]>>,
     );
 
-    // generate schedules
-    const schedules = availableMeetingDates.map((meetingDate) => {
-      const currentDate = meetingDate.available_date;
+    const reducedSelectTimetables = Object.entries(
+      reducedSelectTimetablesFromDB,
+    ).map(([date, times]) => ({
+      date,
+      times: Object.entries(times).map(([time, available]) => ({
+        time,
+        available,
+      })),
+    }));
 
-      const times = availableTimetables.map((timetable) => {
-        // 각 timetable 별 작업 수행
-        const available = [];
-        const unavailable = [];
+    const scheduleDates = [];
+    availableMeetingDatesDuration.map((dateDuration) => {
+      const timesForCurrentDate = reducedSelectTimetables.find(
+        (timetable) => timetable.date === dateDuration.available_date,
+      );
 
-        availableSchedulesForMember.forEach((memberSchedules) => {
-          // 각 member 별, 각 date 별 필터링
-          const selectedTimesForDate =
-            memberSchedules.selectedTimesForDates.find(
-              (selectedTimesForDate) =>
-                selectedTimesForDate.date === currentDate,
-            );
+      const scheduleTimes = [];
 
-          if (!selectedTimesForDate)
-            unavailable.push({ nickname: memberSchedules.member.nickname });
-          else {
-            // 해당하는 date가 있음, timetable을 찾아야함.
-
-            const availableTime = selectedTimesForDate.times.find(
-              (time) => time.time === timetable,
-            );
-
-            if (!availableTime)
-              unavailable.push({ nickname: memberSchedules.member.nickname });
-            else available.push({ nickname: memberSchedules.member.nickname });
+      availableTimetablesDuration.map((timetableDuration) => {
+        const scheduleNicknames = { available: [], unavailable: [] };
+        const scheduleMemberIds = timesForCurrentDate
+          ? timesForCurrentDate.times.find(
+              (time) => time.time === timetableDuration,
+            )
+          : undefined;
+        meetingMembers.map((member) => {
+          const availableMember = scheduleMemberIds
+            ? scheduleMemberIds.available.find(
+                (memberId) => memberId.member_id === member.member_id,
+              )
+            : undefined;
+          if (availableMember) {
+            scheduleNicknames.available.push(member.nickname);
+          } else {
+            scheduleNicknames.unavailable.push(member.nickname);
           }
         });
-
-        return {
-          time: timetable,
-          available,
-          unavailable,
-        };
+        scheduleTimes.push({
+          time: timetableDuration,
+          available: scheduleNicknames.available,
+          unavailable: scheduleNicknames.unavailable,
+        });
       });
 
-      return {
-        date: currentDate,
-        times,
-      };
+      scheduleDates.push({
+        date: dateDuration.available_date,
+        times: scheduleTimes,
+      });
     });
 
-    return { members: meetingMembers.length, schedules };
+    return { members: meetingMembers.length, schedules: scheduleDates };
   }
 }
