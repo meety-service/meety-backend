@@ -137,24 +137,24 @@ export class MeetingsScheduleService {
     });
 
     // TODO: 더 간단한 로직으로
-    availableMeetingDates.forEach(async (date) => {
-      newSchedule.selected_items.forEach(async (item) => {
-        if (item.date === date.available_date) {
-          item.times.forEach(async (time) => {
-            await this.selectTimetables.update(
-              {
-                meeting_id: meetingMember.meeting_id,
-                member_id: meetingMember.member_id,
-                meeting_date_id: date.id,
-              },
-              {
-                select_time: time,
-              },
-            );
-          });
-        }
-      });
-    });
+    // availableMeetingDates.forEach(async (date) => {
+    //   newSchedule.select_times.forEach(async (item) => {
+    //     if (item.date === date.available_date) {
+    //       item.times.forEach(async (time) => {
+    //         await this.selectTimetables.update(
+    //           {
+    //             meeting_id: meetingMember.meeting_id,
+    //             member_id: meetingMember.member_id,
+    //             meeting_date_id: date.id,
+    //           },
+    //           {
+    //             time: time,
+    //           },
+    //         );
+    //       });
+    //     }
+    //   });
+    // });
   }
 
   generateAvailableTimetable(startTime: string, endTime: string): string[] {
