@@ -44,7 +44,7 @@ export class MeetingsService {
           id: meeting.id,
           name: meeting.name,
           isMaster: meeting.member_id === meetingWithMember.member_id ? 1 : 0,
-          user_status: 0, // TODO: ERD에 추가
+          user_state: meetingWithMember.user_state,
         };
       }),
     );
@@ -77,15 +77,15 @@ export class MeetingsService {
     const start = new Date(startDate);
     const end = new Date(endDate);
     const dateList: string[] = [];
-  
+
     for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
-  
+
       dateList.push(`${year}-${month}-${day}`);
     }
-  
+
     return dateList;
   }
 
@@ -113,7 +113,10 @@ export class MeetingsService {
     if (!meetingId)
       throw EntityNotFoundException('미팅이 올바르게 생성되지 않았습니다.');
 
-    const dateList = this.generateDateList(meetingDto.available_dates[0].date, meetingDto.available_dates[1].date);
+    const dateList = this.generateDateList(
+      meetingDto.available_dates[0].date,
+      meetingDto.available_dates[1].date,
+    );
     dateList.map(async (availableDate: string) => {
       await this.meetingDates.insert({
         meeting_id: meetingId,
@@ -132,6 +135,8 @@ export class MeetingsService {
   }
 
   async getMeetingById(meetingId: number) {
+    const memberId = 1; // TODO: member id 수정
+
     const meeting = await this.meetings.findOne({ where: { id: meetingId } });
     const meetingDates = await this.meetingDates.find({
       where: { id: meetingId },
@@ -140,9 +145,28 @@ export class MeetingsService {
     if (!meeting || !meetingDates)
       throw EntityNotFoundException('해당되는 미팅 ID를 찾을 수 없습니다.');
 
+    const member = await this.meetingMembers.findOne({
+      where: { meeting_id: meetingId, member_id: memberId },
+    });
+
     meeting.meeting_dates = meetingDates;
 
-    return meeting;
+    return { ...meeting, user_state: member ? member.user_state : -1 };
+  }
+
+  async validateUserState(meetingId: number, oldUserState: number) {
+    const memberId = 1; // TODO: 수정
+    const meetingMember = await this.meetingMembers.findOne({
+      where: { meeting_id: meetingId, member_id: memberId },
+    });
+
+    if (!meetingMember)
+      throw EntityNotFoundException('해당되는 데이터를 찾을 수 없습니다.');
+
+    return {
+      is_validate_state: meetingMember.user_state === oldUserState,
+      latest_user_state: meetingMember.user_state,
+    };
   }
 
   generateRandomString(length: number): string {

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityNotFoundException } from 'src/common/exception/service.exception';
+import { EntityNotFoundException, InvalidRequestException } from 'src/common/exception/service.exception';
 import { Meeting } from 'src/entity/meeting.entity';
 import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { MeetingMember } from 'src/entity/meetingMember.entity';
@@ -33,35 +33,32 @@ export class MeetingsScheduleService {
     });
     if (!meetingMember)
       throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
-
+    if (meetingMember.user_state > 1) 
+      throw InvalidRequestException('잘못된 user state 값입니다.');
+    
     await this.meetingMembers.update(
       { meeting_id: meetingId, member_id: memberId },
-      { nickname: scheduleDto.nickname },
+      { nickname: scheduleDto.nickname, user_state: 1 },
     );
 
     const availableMeetingDates = await this.meetingDates.find({
       where: { meeting_id: meetingMember.meeting_id },
     });
 
-    // TODO: 더 간단한 로직으로
     await Promise.all(
-      availableMeetingDates.map(async (date) => {
-        return Promise.all(
-          scheduleDto.select_times.map(async (item) => {
-            if (item.date === date.available_date) {
-              return Promise.all(
-                item.times.map(async (time) => {
-                  Logger.debug('time: ' + JSON.stringify(time.time));
+      scheduleDto.select_times.map(async (timetable) => {
+        const dateId = availableMeetingDates.find(
+          (date) => date.available_date === timetable.date,
+        ).id;
 
-                  await this.selectTimetables.insert({
-                    meeting_id: meetingMember.meeting_id,
-                    member_id: meetingMember.member_id,
-                    meeting_date_id: date.id,
-                    select_time: time.time,
-                  });
-                }),
-              );
-            }
+        return Promise.all(
+          timetable.times.map(async (time) => {
+            await this.selectTimetables.insert({
+              meeting_id: meetingMember.meeting_id,
+              member_id: meetingMember.member_id,
+              meeting_date_id: dateId,
+              select_time: time.time,
+            });
           }),
         );
       }),
