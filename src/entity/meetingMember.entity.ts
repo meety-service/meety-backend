@@ -1,15 +1,13 @@
 import {
-BaseEntity,
-Column,
-Entity,
-PrimaryGeneratedColumn,
-ManyToOne,
-JoinColumn,
-PrimaryColumn,
+  BaseEntity,
+  Column,
+  Entity,
+  ManyToOne,
+  JoinColumn,
+  PrimaryColumn,
 } from 'typeorm';
 import { Meeting } from './meeting.entity';
 import { Member } from './member.entity';
-  
 
 @Entity({ name: 'meeting_member' })
 export class MeetingMember extends BaseEntity {
@@ -19,17 +17,24 @@ export class MeetingMember extends BaseEntity {
   @PrimaryColumn({ name: 'member_id' })
   member_id: number;
 
-  @ManyToOne((type) => Meeting, meeting => meeting.meeting_members, { onDelete: 'CASCADE' })
+  @ManyToOne((type) => Meeting, (meeting) => meeting.meeting_members, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'meeting_id' })
   meeting: Meeting;
-  
-  @ManyToOne(type => Member, member => member.meeting_members, { onDelete: 'CASCADE' })
+
+  @ManyToOne((type) => Member, (member) => member.meeting_members, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'member_id' })
   member: Member;
-  
+
   @Column()
   nickname: string;
 
-  @Column({default:1})
+  @Column({ default: 1 })
   list_visible: number;
+
+  @Column({ default: 0 })
+  user_state: number;
 }
