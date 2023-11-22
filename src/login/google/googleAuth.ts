@@ -13,3 +13,10 @@ export interface RefreshGoogleAuthRes {
   scope: string;
   token_type: string;
 }
+
+export interface UserId {
+  exists: boolean;
+  status: number;
+  member_id: number;
+  email: string;
+}
