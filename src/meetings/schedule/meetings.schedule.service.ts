@@ -7,6 +7,7 @@ import {
 import { Meeting } from 'src/entity/meeting.entity';
 import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { MeetingMember } from 'src/entity/meetingMember.entity';
+import { Member } from 'src/entity/member.entity';
 import { SelectTimetable } from 'src/entity/selectTimetable.entity';
 import {
   AllScheduleDateDto,
@@ -25,6 +26,8 @@ export class MeetingsScheduleService {
     private selectTimetables: Repository<SelectTimetable>,
     @InjectRepository(MeetingDate)
     private meetingDates: Repository<MeetingDate>,
+    @InjectRepository(Member)
+    private members: Repository<Member>,
   ) {}
 
   async createSchedules(
@@ -32,11 +35,27 @@ export class MeetingsScheduleService {
     memberId: number,
     scheduleDto: ScheduleDto,
   ) {
-    const meetingMember = await this.meetingMembers.findOne({
+    let meetingMember = await this.meetingMembers.findOne({
       where: { member_id: memberId, meeting_id: meetingId },
     });
-    if (!meetingMember)
-      throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
+
+    // URL을 공유 받아서 새롭게 미팅에 참여하는 경우 새롭게 멤버를 meeting_member에 추가
+    if (!meetingMember) {
+      const member = await this.members.findOne({ where: { id: memberId } });
+
+      // 단, 멤버가 존재하지 않으면 Exception 발생
+      if (!member)
+        throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
+
+      meetingMember = await this.meetingMembers.save({
+        meeting_id: meetingId,
+        member_id: memberId,
+        nickname: scheduleDto.nickname,
+        list_visible: 1,
+      });
+    }
+
+    // user state가 투표 단계로 넘어간 경우 스케줄 생성 불가
     if (meetingMember.user_state > 1)
       throw InvalidRequestException('잘못된 user state 값입니다.');
 
@@ -44,6 +63,12 @@ export class MeetingsScheduleService {
       { meeting_id: meetingId, member_id: memberId },
       { nickname: scheduleDto.nickname, user_state: 1 },
     );
+
+    // update는 update함수를 통해 이루어지지만, 클라이언트에서 잘못 호출하거나 닉네임 변경 등이 필요할 때
+    await this.selectTimetables.delete({
+      meeting_id: meetingId,
+      member_id: memberId,
+    });
 
     const availableMeetingDates = await this.meetingDates.find({
       where: { meeting_id: meetingMember.meeting_id },
@@ -54,7 +79,6 @@ export class MeetingsScheduleService {
         const dateId = availableMeetingDates.find(
           (date) => date.available_date === timetable.date,
         ).id;
-
         return Promise.all(
           timetable.times.map(async (time) => {
             await this.selectTimetables.insert({
@@ -128,6 +152,10 @@ export class MeetingsScheduleService {
     });
     if (!meetingMember)
       throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
+
+    // user state가 투표 단계로 넘어간 경우 스케줄 생성 불가
+    if (meetingMember.user_state > 1)
+      throw InvalidRequestException('잘못된 user state 값입니다.');
 
     const availableMeetingDates = await this.meetingDates.find({
       where: { meeting_id: meetingMember.meeting_id },
