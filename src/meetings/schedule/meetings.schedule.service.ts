@@ -220,87 +220,59 @@ export class MeetingsScheduleService {
       meeting.end_time,
     );
 
-    const availableMeetingDates = await this.meetingDates.find({
+    const availableMeetingDatesDuration = await this.meetingDates.find({
       where: { meeting_id: meeting.id },
     });
 
-    if (!availableMeetingDates)
+    if (!availableMeetingDatesDuration)
       throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
 
-    // 각 member 별, 각 date별, 가능한 시작 시간 unit들을 모은 객체 배열.
-    const availableSchedulesForMember = await Promise.all(
+    const selectTimetablesForMembers = await Promise.all(
       meetingMembers.map(async (member) => {
-        const selectedTimesForDates = await Promise.all(
-          availableMeetingDates.map(async (date) => {
-            // 해당 date에 대해, 해당 member가 고른 시간들을 넣어줌
-            const selectedTimesFromDB = await this.selectTimetables.find({
-              where: {
-                meeting_id: meetingId,
-                member_id: member.meeting_id,
-                meeting_date_id: date.id,
-              },
-            });
+        const selectTimetables = await this.selectTimetables
+          .createQueryBuilder('select_timetable')
+          .innerJoinAndSelect('select_timetable.meeting_date', 'meeting_date')
+          .select([
+            'select_timetable.select_time',
+            'meeting_date.available_date',
+          ])
+          .where(
+            'select_timetable.meeting_id = :meetingId and select_timetable.member_id = :memberId',
+            { meetingId, memberId: member.member_id },
+          )
+          .getMany();
 
-            if (!selectedTimesFromDB)
-              return { date: date.available_date, times: [] };
-
-            const selectedTimes = selectedTimesFromDB.map((time) => {
-              return { time: time.select_time };
-            });
-
-            return { date: date.available_date, times: selectedTimes };
-          }),
+        Logger.debug(
+          'selectTimetables for member: ' + JSON.stringify(selectTimetables),
         );
 
-        return { member, selectedTimesForDates };
+        const stt = [
+          {
+            select_time: '09:30:00',
+            meeting_date: { available_date: '2023-11-02' },
+          },
+          {
+            select_time: '10:00:00',
+            meeting_date: { available_date: '2023-11-02' },
+          },
+          {
+            select_time: '12:30:00',
+            meeting_date: { available_date: '2023-11-03' },
+          },
+          {
+            select_time: '13:00:00',
+            meeting_date: { available_date: '2023-11-03' },
+          },
+        ];
+
+        return { member: member.nickname, selectTimetables };
       }),
     );
 
-    // generate schedules
-    const schedules = availableMeetingDates.map((meetingDate) => {
-      const currentDate = meetingDate.available_date;
+    const schedules = selectTimetablesForMembers.map(
+      async (selectTimetablesForMember) => {},
+    );
 
-      const times = availableTimetables.map((timetable) => {
-        // 각 timetable 별 작업 수행
-        const available = [];
-        const unavailable = [];
-
-        availableSchedulesForMember.forEach((memberSchedules) => {
-          // 각 member 별, 각 date 별 필터링
-          const selectedTimesForDate =
-            memberSchedules.selectedTimesForDates.find(
-              (selectedTimesForDate) =>
-                selectedTimesForDate.date === currentDate,
-            );
-
-          if (!selectedTimesForDate)
-            unavailable.push({ nickname: memberSchedules.member.nickname });
-          else {
-            // 해당하는 date가 있음, timetable을 찾아야함.
-
-            const availableTime = selectedTimesForDate.times.find(
-              (time) => time.time === timetable,
-            );
-
-            if (!availableTime)
-              unavailable.push({ nickname: memberSchedules.member.nickname });
-            else available.push({ nickname: memberSchedules.member.nickname });
-          }
-        });
-
-        return {
-          time: timetable,
-          available,
-          unavailable,
-        };
-      });
-
-      return {
-        date: currentDate,
-        times,
-      };
-    });
-
-    return { members: meetingMembers.length, schedules };
+    return { members: meetingMembers.length, schedules: [] };
   }
 }
