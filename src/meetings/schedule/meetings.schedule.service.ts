@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityNotFoundException, InvalidRequestException } from 'src/common/exception/service.exception';
+import {
+  EntityNotFoundException,
+  InvalidRequestException,
+} from 'src/common/exception/service.exception';
 import { Meeting } from 'src/entity/meeting.entity';
 import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { MeetingMember } from 'src/entity/meetingMember.entity';
@@ -33,9 +36,9 @@ export class MeetingsScheduleService {
     });
     if (!meetingMember)
       throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
-    if (meetingMember.user_state > 1) 
+    if (meetingMember.user_state > 1)
       throw InvalidRequestException('잘못된 user state 값입니다.');
-    
+
     await this.meetingMembers.update(
       { meeting_id: meetingId, member_id: memberId },
       { nickname: scheduleDto.nickname, user_state: 1 },
@@ -65,10 +68,7 @@ export class MeetingsScheduleService {
     );
   }
 
-  async getPersonalSchedules(
-    meetingId: number,
-    memberId: number,
-  ): Promise<ScheduleDto> {
+  async getPersonalSchedules(meetingId: number, memberId: number) {
     const meetingMember = await this.meetingMembers.findOne({
       where: { member_id: memberId, meeting_id: meetingId },
     });
@@ -102,12 +102,11 @@ export class MeetingsScheduleService {
       })
       .filter((item) => item.times.length > 0);
 
-    const response: ScheduleDto = {
+    return {
       nickname: meetingMember.nickname,
       select_times: selectedItems,
+      user_state: meetingMember.user_state,
     };
-
-    return response;
   }
 
   isDateInRange(date: string, startDate: string, endDate: string): boolean {
