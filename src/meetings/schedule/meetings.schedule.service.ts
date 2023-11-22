@@ -36,7 +36,7 @@ export class MeetingsScheduleService {
 
     await this.meetingMembers.update(
       { meeting_id: meetingId, member_id: memberId },
-      { nickname: scheduleDto.nickname },
+      { nickname: scheduleDto.nickname, user_state: 1 },
     );
 
     const availableMeetingDates = await this.meetingDates.find({
