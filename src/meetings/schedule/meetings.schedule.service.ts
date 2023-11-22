@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityNotFoundException } from 'src/common/exception/service.exception';
+import { EntityNotFoundException, InvalidRequestException } from 'src/common/exception/service.exception';
 import { Meeting } from 'src/entity/meeting.entity';
 import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { MeetingMember } from 'src/entity/meetingMember.entity';
-import { SelectTimetable } from 'src/entity/selectTimetable.entity';
+import { SelectTimetable} from 'src/entity/selectTimetable.entity';
 import {
   ScheduleDto,
   SelectTimetableDto,
@@ -136,25 +136,40 @@ export class MeetingsScheduleService {
       where: { meeting_id: meetingMember.meeting_id },
     });
 
-    // TODO: 더 간단한 로직으로
-    availableMeetingDates.forEach(async (date) => {
-      newSchedule.selected_items.forEach(async (item) => {
-        if (item.date === date.available_date) {
-          item.times.forEach(async (time) => {
-            await this.selectTimetables.update(
-              {
-                meeting_id: meetingMember.meeting_id,
-                member_id: meetingMember.member_id,
-                meeting_date_id: date.id,
-              },
-              {
-                select_time: time,
-              },
-            );
-          });
-        }
-      });
-    });
+    let schedules: SelectTimetable[] = [];
+
+    newSchedule.select_times.map((date)=>{
+      //스케줄의 날짜가 범위내의 날짜 인지 확인
+      const meetingDate = availableMeetingDates.find(availableDate => {return availableDate.available_date == date.date;});
+      
+      if(!meetingDate){
+        throw InvalidRequestException('가능한 미팅 날짜 범위 밖입니다');
+      }
+
+      //해당 날짜의 timetable을 임시변수에 추가
+      date.times.map((time)=>{
+        const selectTimetable = new SelectTimetable();
+        selectTimetable.meeting_id = meetingId;
+        selectTimetable.meeting_date_id = meetingDate.id;
+        selectTimetable.member_id = memberId;
+        selectTimetable.select_time = time.time;
+        schedules.push(selectTimetable);
+      })
+
+    })
+
+    //member 닉네임 업데이트
+    await this.meetingMembers.update(
+      { meeting_id: meetingId, member_id: memberId },
+      { nickname: newSchedule.nickname },
+    );
+
+    //기존 스케줄 삭제
+    await this.selectTimetables.delete({member_id: memberId, meeting_id: meetingId});
+
+    //스케줄 업데이트
+    await this.selectTimetables.save(schedules);
+
   }
 
   generateAvailableTimetable(startTime: string, endTime: string): string[] {
