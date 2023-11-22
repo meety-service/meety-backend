@@ -43,25 +43,20 @@ export class MeetingsScheduleService {
       where: { meeting_id: meetingMember.meeting_id },
     });
 
-    // TODO: 더 간단한 로직으로
     await Promise.all(
-      availableMeetingDates.map(async (date) => {
-        return Promise.all(
-          scheduleDto.select_times.map(async (item) => {
-            if (item.date === date.available_date) {
-              return Promise.all(
-                item.times.map(async (time) => {
-                  Logger.debug('time: ' + JSON.stringify(time.time));
+      scheduleDto.select_times.map(async (timetable) => {
+        const dateId = availableMeetingDates.find(
+          (date) => date.available_date === timetable.date,
+        ).id;
 
-                  await this.selectTimetables.insert({
-                    meeting_id: meetingMember.meeting_id,
-                    member_id: meetingMember.member_id,
-                    meeting_date_id: date.id,
-                    select_time: time.time,
-                  });
-                }),
-              );
-            }
+        return Promise.all(
+          timetable.times.map(async (time) => {
+            await this.selectTimetables.insert({
+              meeting_id: meetingMember.meeting_id,
+              member_id: meetingMember.member_id,
+              meeting_date_id: dateId,
+              select_time: time.time,
+            });
           }),
         );
       }),
