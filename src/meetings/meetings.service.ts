@@ -145,7 +145,21 @@ export class MeetingsService {
 
     meeting.meeting_dates = meetingDates;
 
-    return meeting;
+  }
+
+  async validateUserState(meetingId: number, oldUserState: number) {
+    const memberId = 1; // TODO: 수정
+    const meetingMember = await this.meetingMembers.findOne({
+      where: { meeting_id: meetingId, member_id: memberId },
+    });
+
+    if (!meetingMember)
+      throw EntityNotFoundException('해당되는 데이터를 찾을 수 없습니다.');
+
+    return {
+      is_validate_state: meetingMember.user_state === oldUserState,
+      latest_user_state: meetingMember.user_state,
+    };
   }
 
   generateRandomString(length: number): string {

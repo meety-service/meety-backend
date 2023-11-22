@@ -49,6 +49,14 @@ export class MeetingsController {
     return this.meetingsService.getMeetingById(meetingId);
   }
 
+  @Post('/:id/user-state')
+  validateUserState(
+    @Param('id') meetingId: number,
+    @Body('user_state') userState: number,
+  ) {
+    return this.meetingsService.validateUserState(meetingId, userState);
+  }
+
   // for test
   @Post('/test/member')
   createMember(@Body('email') email: string) {
