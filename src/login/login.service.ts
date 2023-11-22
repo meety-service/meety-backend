@@ -14,6 +14,8 @@ export class LoginService {
       'code',
     );
 
+    console.log('login try' + request.headers);
+
     const bodyObject = {
       code,
       client_id: process.env.NEXT_PUBLIC_GAPI_CLIENT_ID,
@@ -32,6 +34,7 @@ export class LoginService {
     const res = await fetch(url, options);
 
     if (!res.ok) {
+      console.log('google server request fail');
       return { status: res.status };
     }
 
@@ -49,12 +52,14 @@ export class LoginService {
       const email = JSON.parse(id_token_string[1]).email;
     } catch (e) {
       //구글 응답에 email이 포함되지 않음... 등
+      console.log('google server response error');
       return { status: 500 };
     }
 
     //TODO
     //이메일이 데이터베이스 유저 테이블에 존재하는지 확인하고, 없다면 유저를 신규 등록해야 함
 
+    console.log('login success');
     return {
       cookieName,
       refreshToken,
@@ -62,11 +67,11 @@ export class LoginService {
   }
 
   async refresh(request: Request) {
-    const cookie =
-      request.headers.get('cookie') || request.headers.get('Cookie'); //쿠키로 클라이언트로부터 코드 전달받기
-
-    if (!cookie || !cookie.includes(`${cookieName}=`))
-      return new Response('No cookie', { status: 401 });
+    const cookie = request.headers['cookie'] || request.headers['Cookie']; //쿠키로 클라이언트로부터 코드 전달받기
+    if (!cookie || !cookie.includes(`${cookieName}=`)) {
+      console.log('cookie error', cookie);
+      return { status: 401 };
+    }
 
     const token = cookie
       .split(';')
@@ -88,7 +93,7 @@ export class LoginService {
     };
     const res = await fetch(url, options); // 구글 oauth서버에서 access_token, id_token을 요청
 
-    if (!res.ok) return new Response('Error', { status: res.status });
+    if (!res.ok) return { status: res.status };
 
     const data = await res.json();
     const accessToken = (data as RefreshGoogleAuthRes).access_token;
@@ -103,10 +108,8 @@ export class LoginService {
     } catch (e) {
       //구글 응답에 email이 포함되지 않음... 등
       console.log(e);
-      return new Response('Error', { status: 500 });
+      return { status: 500 };
     }
-
-    const response = new Response(accessToken);
 
     //구글에 요청해서 사용자 구별 정보 받아오기
     //등록되어 있지 않은 경우에 디비에 저장
@@ -115,7 +118,7 @@ export class LoginService {
     //email이 디비에 있는지 확인
     //있으면 그냥 로그인
     //없으면 가입절차 (디비에 넣어주기)
-    return response;
+    return { accessToken, status: 200 };
     //200:로그인 된 상태로 정상 응답, 401:쿠키 없음(로그인되지 않은 상태), 500:에러
   }
 }
