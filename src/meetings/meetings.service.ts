@@ -65,11 +65,10 @@ export class MeetingsService {
   async hideMeetingById(
     memberId: number,
     meetingId: number,
-    listVisible: number,
   ) {
     await this.meetingMembers.update(
       { meeting_id: meetingId, member_id: memberId },
-      { list_visible: listVisible },
+      { list_visible: 0 },
     );
   }
 

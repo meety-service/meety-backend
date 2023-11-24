@@ -34,9 +34,7 @@ export class LoginController {
       'Set-Cookie',
       `${cookieName}=${refreshToken}; Max-Age=315360000; Path=/;`, // HttpOnly;
     );
-    return res.send(
-      `<script>window.location.href = '${process.env.FRONTURL}'; </script>`,
-    );
+    return res.send('<script>window.location.href="http://localhost:3000"</script>');
   }
 
   @Get('/refresh') // http://local/login/refresh
