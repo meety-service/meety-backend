@@ -7,6 +7,7 @@ import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { Meeting } from 'src/entity/meeting.entity';
 import { VoteChoice } from 'src/entity/voteChoice.entity';
 import { VoteChoiceMember } from 'src/entity/voteChoiceMember.entity';
+import { MeetingMember } from 'src/entity/meetingMember.entity';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { VoteChoiceMember } from 'src/entity/voteChoiceMember.entity';
       Vote,
       Meeting,
       MeetingDate,
+      MeetingMember,
       VoteChoiceMember,
     ]),
   ],

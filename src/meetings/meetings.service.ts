@@ -25,8 +25,31 @@ export class MeetingsService {
     private timezones: Repository<Timezone>,
   ) {}
 
-  async getMeetings(): Promise<Meeting[]> {
+  // for test
+  async getAllMeetings(): Promise<Meeting[]> {
     return await this.meetings.find();
+  }
+
+  async getMeetingsFromMainScreen(memberId: number) {
+    const meetingWithMembers = await this.meetingMembers.find({
+      where: { member_id: memberId },
+    });
+    const meetings = await Promise.all(
+      meetingWithMembers.map(async (meetingWithMember) => {
+        const meeting = await this.meetings.findOne({
+          where: { id: meetingWithMember.meeting_id },
+        });
+
+        return {
+          id: meeting.id,
+          name: meeting.name,
+          isMaster: meeting.member_id === meetingWithMember.member_id ? 1 : 0,
+          user_state: meetingWithMember.user_state,
+        };
+      }),
+    );
+
+    return meetings;
   }
 
   async deleteMeetingById(meetingId: number) {
@@ -34,7 +57,7 @@ export class MeetingsService {
       where: { id: meetingId },
     });
     if (!targetMeeting)
-      throw new HttpException('Meeting Not Found', HttpStatus.NOT_FOUND);
+      throw EntityNotFoundException('해당되는 미팅 ID를 찾을 수 없습니다.');
 
     await this.meetings.delete({ id: meetingId });
   }
@@ -48,6 +71,22 @@ export class MeetingsService {
       { meeting_id: meetingId, member_id: memberId },
       { list_visible: listVisible },
     );
+  }
+
+  generateDateList(startDate: string, endDate: string): string[] {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const dateList: string[] = [];
+
+    for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+
+      dateList.push(`${year}-${month}-${day}`);
+    }
+
+    return dateList;
   }
 
   async createMeeting(meetingDto: MeetingDto, managerId: number) {
@@ -74,28 +113,60 @@ export class MeetingsService {
     if (!meetingId)
       throw EntityNotFoundException('미팅이 올바르게 생성되지 않았습니다.');
 
-    meetingDto.available_dates.map(async (availableDate: AvailableDate) => {
+    const dateList = this.generateDateList(
+      meetingDto.available_dates[0].date,
+      meetingDto.available_dates[1].date,
+    );
+    dateList.map(async (availableDate: string) => {
       await this.meetingDates.insert({
         meeting_id: meetingId,
-        available_date: availableDate.date,
+        available_date: availableDate,
       });
+    });
+
+    await this.meetingMembers.insert({
+      meeting_id: meetingId,
+      member_id: managerId,
+      nickname: '',
+      list_visible: 1,
     });
 
     return meetingResult;
   }
 
   async getMeetingById(meetingId: number) {
+    const memberId = 1; // TODO: member id 수정
+
     const meeting = await this.meetings.findOne({ where: { id: meetingId } });
     const meetingDates = await this.meetingDates.find({
       where: { id: meetingId },
     });
 
     if (!meeting || !meetingDates)
-      throw EntityNotFoundException('미팅을 찾을 수 없습니다');
+      throw EntityNotFoundException('해당되는 미팅 ID를 찾을 수 없습니다.');
+
+    const member = await this.meetingMembers.findOne({
+      where: { meeting_id: meetingId, member_id: memberId },
+    });
 
     meeting.meeting_dates = meetingDates;
 
-    return meeting;
+    return { ...meeting, user_state: member ? member.user_state : -1 };
+  }
+
+  async validateUserState(meetingId: number, oldUserState: number) {
+    const memberId = 1; // TODO: 수정
+    const meetingMember = await this.meetingMembers.findOne({
+      where: { meeting_id: meetingId, member_id: memberId },
+    });
+
+    if (!meetingMember)
+      throw EntityNotFoundException('해당되는 데이터를 찾을 수 없습니다.');
+
+    return {
+      is_validate_state: meetingMember.user_state === oldUserState,
+      latest_user_state: meetingMember.user_state,
+    };
   }
 
   generateRandomString(length: number): string {

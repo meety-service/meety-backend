@@ -8,14 +8,15 @@ export class MeetingsScheduleController {
   ) {}
 
   @Post()
-  createSchedules(@Param('id') meetingId: number) {
-    const success = this.MeetingsScheduleService.createSchedules(meetingId);
-    return { success };
+  createSchedules(@Param('id') meetingId: number, @Body() scheduleDto: ScheduleDto) {
+    const memberId = 1;
+    return this.MeetingsScheduleService.createSchedules(meetingId, memberId, scheduleDto);
   }
 
   @Get()
   getPersonalSchedules(@Param('id') meetingId: number) {
-    return this.MeetingsScheduleService.getPersonalSchedules(meetingId);
+    const memberId = 1;
+    return this.MeetingsScheduleService.getPersonalSchedules(meetingId, memberId);
   }
 
   @Put()
@@ -23,11 +24,12 @@ export class MeetingsScheduleController {
     @Param('id') meetingId: number,
     @Body() newSchedule: ScheduleDto,
   ) {
-    const success = this.MeetingsScheduleService.updateSchedules(
+    const memberId = 1;
+    return this.MeetingsScheduleService.updateSchedules(
       meetingId,
+      memberId,
       newSchedule,
     );
-    return { success };
   }
 
   @Get('/all')

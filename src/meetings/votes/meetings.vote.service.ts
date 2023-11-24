@@ -9,6 +9,7 @@ import { EntityDuplicatedException, EntityNotFoundException, InvalidRequestExcep
 import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { VoteChoiceMember } from 'src/entity/voteChoiceMember.entity';
 import { UserChoiceDto } from './dto/vote.choice.dto';
+import { MeetingMember } from 'src/entity/meetingMember.entity';
 
 @Injectable()
 export class MeetingsVoteService {
@@ -18,6 +19,9 @@ export class MeetingsVoteService {
   
     @InjectRepository(Meeting)
     private readonly meetingRepository: Repository<Meeting>,
+    
+    @InjectRepository(MeetingMember)
+    private readonly meetingMemberRepository: Repository<MeetingMember>,
 
     @InjectRepository(MeetingDate)
     private readonly meetingDateRepository: Repository<MeetingDate>,
@@ -72,6 +76,9 @@ export class MeetingsVoteService {
     vote.vote_choices = voteChoices;
 
     await this.voteRepository.save(vote);
+    
+    //user_state갱신
+    await this.meetingMemberRepository.update({meeting_id:meeting_id},{user_state:2});
 
   }
 
@@ -195,6 +202,8 @@ export class MeetingsVoteService {
       await this.voteChoiceMemberRepository.save({vote_choice_id: user_choice.id, member_id:user_id});
     })
 
+    //user state갱신
+    await this.meetingMemberRepository.update({meeting_id:meeting_id, member_id:user_id}, {user_state:3});
     
   }
 
@@ -264,6 +273,11 @@ export class MeetingsVoteService {
     }
 
     await this.voteRepository.update({meeting_id: meeting_id},{close : voteCloseDto.close});
+
+    //user_state갱신
+    if(voteCloseDto.close){
+      await this.meetingMemberRepository.update({meeting_id: meeting_id},{user_state:4});
+    }
   }
 
 }
