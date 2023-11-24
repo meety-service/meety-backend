@@ -15,8 +15,6 @@ export interface RefreshGoogleAuthRes {
 }
 
 export interface UserId {
-  exists: boolean;
-  status: number;
   member_id: number;
   email: string;
 }

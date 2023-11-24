@@ -10,24 +10,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Member } from 'src/entity/member.entity';
 import { IsNumber, isNumber } from 'class-validator';
-import { parseToken } from 'src/util';
+import { getMemberId, parseToken } from 'src/util';
 
 const cookieName = 'X-Gapi-Refresh-Token'; //클라이언트는 쿠키에 해당 이름을 가지는 필드에 토큰을 저장하여 서버로 전송한다.
 
 const url = 'https://oauth2.googleapis.com/token'; // google oauth server
-
-const hash = (str: string) => {
-  const arr = str.split('');
-  return arr.reduce(
-    (hashCode, currentVal) =>
-      (hashCode =
-        currentVal.charCodeAt(0) +
-        (hashCode << 6) +
-        (hashCode << 16) -
-        hashCode),
-    0,
-  );
-};
 
 @Injectable()
 export class LoginService {
@@ -88,7 +75,6 @@ export class LoginService {
     try {
       if (!member) {
         const memberRegisterResult = await this.members.insert({
-          id: hash(email) % 2147483647,
           token: 'not used',
           email: email,
         });
@@ -106,72 +92,20 @@ export class LoginService {
 
   async refresh(request: Request) {
     const token = parseToken(request.headers);
-    if (!token) return { status: 401 };
+    if (!token) return { status: 401 }; //토큰이 없으므로 로그인되지 않은 상태
 
-    const memberId = await this.getMemberId(token);
-    if (!memberId.exists) {
-      return { status: 500 };
+    const memberId = await getMemberId(token);
+
+    if (!memberId.email) {
+      return { status: 500 }; //구글 서버 에러
     }
-    if (!memberId) {
-      return { status: 401 }; // login 정보 찾을수 없음
+
+    if (!(await this.members.findOne({ where: { email: memberId.email } }))) {
+      return { status: 500 }; // 에러: 구글 인증은 되지만 login 정보 찾을수 없음
     }
 
     return { status: 200 };
     //200:로그인 된 상태로 정상 응답, 401:쿠키 없음(로그인되지 않은 상태), 500:에러
-  }
-
-  async getMemberId(token: string): Promise<UserId> {
-    // 입력으로 유저의 refresh token을 받아서 유저의 식별 정보를 UserId 자료형으로 리턴해주는 함수
-    const bodyObject = {
-      refresh_token: token,
-      client_id: process.env.NEXT_PUBLIC_GAPI_CLIENT_ID,
-      client_secret: process.env.GAPI_CLIENT_SECRET,
-      grant_type: 'refresh_token',
-    };
-
-    const body = JSON.stringify(bodyObject);
-    const options = {
-      method: 'POST',
-      headers: { Accept: '*/*', 'Content-Type': 'application/json' },
-      body,
-    };
-    const res = await fetch(url, options); // 구글 oauth서버에서 access_token, id_token을 요청
-
-    if (!res.ok) {
-      console.log('refresh google response not ok');
-      return {
-        exists: false,
-        status: res.status,
-        member_id: undefined,
-        email: undefined,
-      } as UserId;
-    }
-
-    const data = await res.json();
-    const accessToken = (data as RefreshGoogleAuthRes).access_token;
-
-    const id_token_string = await data.id_token
-      .replaceAll('-', '+')
-      .replaceAll('_', '/')
-      .split('.')
-      .map((a) => atob(a));
-
-    const email = JSON.parse(id_token_string[1]).email;
-    const member = await this.members.findOne({ where: { email } });
-    if (!member) {
-      throw 'getMemberId error: user passed google auth, but not found in database';
-    }
-    console.log('refresh status');
-    console.log(!!member);
-    console.log(res.status);
-    console.log(member.id);
-    console.log(member.email);
-    return {
-      exists: !!member,
-      status: res.status,
-      member_id: member.id,
-      email: member.email,
-    } as UserId;
   }
 }
 
