@@ -1,7 +1,10 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { HttpExceptionFilter, ServiceExceptionToHttpExceptionFilter } from './common/exception-filter/http-exception.filter';
+import {
+  HttpExceptionFilter,
+  ServiceExceptionToHttpExceptionFilter,
+} from './common/exception-filter/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,6 +25,12 @@ async function bootstrap() {
       disableErrorMessages: false,
     }),
   );
+
+  // CORS 허용
+  app.enableCors({
+    origin: true,
+    credentials: true,
+  });
 
   //예외 필터 연결
   app.useGlobalFilters(new HttpExceptionFilter());
