@@ -104,18 +104,9 @@ export class LoginService {
       refreshToken,
     };
   }
-
   async refresh(request: Request) {
-    const cookie = request.headers['cookie'] || request.headers['Cookie']; //쿠키로 클라이언트로부터 코드 전달받기
-    if (!cookie || !cookie.includes(`${cookieName}=`)) {
-      console.log('cookie error', cookie);
-      return { status: 401 };
-    }
-
-    const token = cookie
-      .split(';')
-      .map((c) => c.trim().split('='))
-      .find((c) => c[0] === cookieName)[1];
+    const token = parseToken(request.headers);
+    if (!token) return { status: 401 };
 
     const memberId = await this.getMemberId(token);
     if (!memberId.exists) {
