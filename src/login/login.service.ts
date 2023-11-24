@@ -123,19 +123,4 @@ export const GoogleAuthAccessURL = (() => {
 })();
 //이 주소로 요청하면 구글 로그인 연동 창이 나오고 로그인을 완료하면 로그인 주소로 리디렉션됨.
 
-// https://accounts.google.com/o/oauth2/v2/auth?client_id=129605054816-l0haa5863jbvm7tcv7tr97gqq5ikrh52.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%2Flogin&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email&access_type=offline&prompt=consent
-/* 
-http://localhost/login?
-code=4/0AfJohXlcc8TtBzp5tBaS_X4le6YUg2tCevbu24P9sfJR3nwerfsnE1quO2UCTnEdiROTCA
-&scope=email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+openid&authuser=0
-&prompt=consent#
-
-http://localhost/login?code=4%2F0AfJohXlcc8TtBzp5tBaS_X4le6YUg2tCevbu24P9sfJR3nwerfsnE1quO2UCTnEdiROTCA&scope=email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+openid&authuser=0&prompt=consent#
-
-const googleEmailRequest = async (accessToken: string) => {
-  const url = 'https://www.googleapis.com/auth/userinfo#email';
-  const options = { headers: { Authorization: `Bearer ${accessToken}` } };
-
-  const email = await fetch(url, options);
-};
-*/
+// https://accounts.google.com/o/oauth2/v2/auth?client_id=129605054816-l0haa5863jbvm7tcv7tr97gqq5ikrh52.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Flogin&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email&access_type=offline&prompt=consent
