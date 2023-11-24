@@ -30,10 +30,11 @@ export class ServiceExceptionToHttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
     const status = exception.errorCode.status;
-    
+
     response.status(status).json({
       statusCode: status,
-      message: exception.message,
+      title: exception.title,
+      content: exception.message,
       path: request.url,
     });
   }
