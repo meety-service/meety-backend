@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Member } from 'src/entity/member.entity';
 import { IsNumber, isNumber } from 'class-validator';
+import { parseToken } from 'src/util';
 
 const cookieName = 'X-Gapi-Refresh-Token'; //클라이언트는 쿠키에 해당 이름을 가지는 필드에 토큰을 저장하여 서버로 전송한다.
 
@@ -64,9 +65,7 @@ export class LoginService {
     }
 
     const data = await res.json();
-
     const refreshToken = (data as GoogleAuthRes).refresh_token;
-
     const accessToken = (data as GoogleAuthRes).access_token;
     const id_token_string = await data.id_token
       .replaceAll('-', '+')
@@ -104,6 +103,7 @@ export class LoginService {
       refreshToken,
     };
   }
+
   async refresh(request: Request) {
     const token = parseToken(request.headers);
     if (!token) return { status: 401 };
