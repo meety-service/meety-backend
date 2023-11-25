@@ -6,8 +6,9 @@ import { TimezoneDTO } from './timezoneDTO/timezones.dto';
 export class TimezonesController {
   constructor(private readonly timezonesService: TimezonesService) {}
 
-  @Get()
+  @Get('')
   getTimezones(): Promise<TimezoneDTO[]> {
+    console.log('get timezones');
     return this.timezonesService.getTimezones();
   }
 }
