@@ -104,7 +104,7 @@ export class MeetingsVoteService {
 
     //2. 투표 참여자수 조회
     
-    fetchVote.participants = (await this.voteRepository.query(`SELECT * FROM vote_choice
+    fetchVote.participants = (await this.voteRepository.query(`SELECT vote_choice_member.member_id FROM vote_choice
     JOIN vote_choice_member ON vote_choice_member.vote_choice_id = vote_choice.id
     WHERE vote_choice. vote_id = ?
     GROUP BY vote_choice_member.member_id;`, [vote.id])).length;
