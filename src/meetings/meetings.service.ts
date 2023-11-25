@@ -138,7 +138,7 @@ export class MeetingsService {
 
     const meeting = await this.meetings.findOne({ where: { id: meetingId } });
     const meetingDates = await this.meetingDates.find({
-      where: { id: meetingId },
+      where: { meeting_id: meetingId },
     });
 
     if (!meeting || !meetingDates)
