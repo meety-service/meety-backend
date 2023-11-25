@@ -211,7 +211,7 @@ export class MeetingsScheduleService {
       let seconds = String(current.getUTCSeconds()).padStart(2, '0');
 
       resultTimetable.push(`${hours}:${minutes}:${seconds}`);
-      current.setUTCMinutes(current.getUTCMinutes() + 30);
+      current.setUTCMinutes(current.getUTCMinutes() + 15);
     }
 
     return resultTimetable;
