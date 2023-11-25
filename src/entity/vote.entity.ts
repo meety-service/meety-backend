@@ -15,7 +15,7 @@ export class Vote extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
   
-  @OneToOne(type => Meeting, meeting => meeting.vote)
+  @OneToOne(type => Meeting, meeting => meeting.vote, { onDelete: "CASCADE" })
   @JoinColumn({ name: 'meeting_id', referencedColumnName: 'id'})
   meeting: Meeting;
 
