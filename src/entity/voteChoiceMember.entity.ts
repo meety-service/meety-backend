@@ -17,7 +17,7 @@ export class VoteChoiceMember extends BaseEntity {
   @PrimaryColumn({ name: 'member_id'})
   member_id: number;
 
-  @ManyToOne(type => Member, member => member.vote_choice_members,{ onDelete: 'CASCADE' })
+  @ManyToOne(type => Member, member => member.vote_choice_members, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'member_id', referencedColumnName: 'id'})
   member: Member;
 
