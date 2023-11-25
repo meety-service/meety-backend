@@ -32,7 +32,7 @@ export class MeetingsService {
 
   async getMeetingsFromMainScreen(memberId: number) {
     const meetingWithMembers = await this.meetingMembers.find({
-      where: { member_id: memberId },
+      where: { member_id: memberId, list_visible: 1 },
     });
     const meetings = await Promise.all(
       meetingWithMembers.map(async (meetingWithMember) => {
