@@ -130,7 +130,7 @@ export class MeetingsService {
       list_visible: 1,
     });
 
-    return meetingResult;
+    return {"id" : meetingId};
   }
 
   async getMeetingById(meetingId: number) {
