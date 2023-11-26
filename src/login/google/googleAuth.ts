@@ -15,6 +15,5 @@ export interface RefreshGoogleAuthRes {
 }
 
 export interface UserId {
-  member_id: number;
   email: string;
 }
