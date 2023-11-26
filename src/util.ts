@@ -36,7 +36,6 @@ export async function getMemberId(token: string): Promise<UserId> {
   if (!res.ok) {
     console.log('refresh google response not ok');
     return {
-      member_id: undefined,
       email: undefined,
     } as UserId;
   }
