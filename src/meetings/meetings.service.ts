@@ -112,14 +112,10 @@ export class MeetingsService {
     if (!meetingId)
       throw EntityNotFoundException('미팅이 올바르게 생성되지 않았습니다.');
 
-    const dateList = this.generateDateList(
-      meetingDto.available_dates[0].date,
-      meetingDto.available_dates[1].date,
-    );
-    dateList.map(async (availableDate: string) => {
+    meetingDto.available_dates.map(async (availableDate: AvailableDate) => {
       await this.meetingDates.insert({
         meeting_id: meetingId,
-        available_date: availableDate,
+        available_date: availableDate.date,
       });
     });
 
