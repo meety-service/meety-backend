@@ -10,6 +10,8 @@ import { MeetingDate } from 'src/entity/meetingDate.entity';
 import { VoteChoiceMember } from 'src/entity/voteChoiceMember.entity';
 import { UserChoiceDto } from './dto/vote.choice.dto';
 import { MeetingMember } from 'src/entity/meetingMember.entity';
+import { getMemberId, parseToken } from 'src/util';
+import { Member } from 'src/entity/member.entity';
 
 @Injectable()
 export class MeetingsVoteService {
@@ -28,10 +30,29 @@ export class MeetingsVoteService {
     
     @InjectRepository(VoteChoiceMember)
     private readonly voteChoiceMemberRepository: Repository<VoteChoiceMember>,
+
+    @InjectRepository(Member)
+    private readonly memberRepository: Repository<Member>,
   
   ) {}
   
-  async createVote(meeting_id : number, createVoteDto : CreateVoteDto){
+  async createVote(meeting_id : number, createVoteDto : CreateVoteDto, req : Request){
+    //TODO 로그인 유저 id받기
+    const token = parseToken(req.headers);
+
+    if (!token){//토큰이 없으므로 로그인되지 않은 상태
+      throw NoRightException('로그인이 필요한 서비스입니다.');
+    } 
+    
+    const memberEmail = (await getMemberId(token)).email;
+    const user = await this.memberRepository.findOne({where:{email:memberEmail}});
+
+    if (!user){
+      throw NoRightException('잘못된 회원정보입니다.');
+    } 
+
+    const user_id = user.id;
+
     const vote = new Vote();
     
     const meeting = await this.meetingRepository.findOne({where:{id:meeting_id}, relations: ['meeting_dates']});
@@ -43,8 +64,6 @@ export class MeetingsVoteService {
       throw EntityDuplicatedException('이미 존재하는 투표입니다');     
     }
     
-    //TODO 로그인 유저 id받기
-    const user_id = 1;
     if(meeting.member_id != user_id){
       throw NoRightException('방장 외에는 투표생성이 불가능합니다');
     }
@@ -82,7 +101,23 @@ export class MeetingsVoteService {
 
   }
 
-  async fetchVote(meeting_id : number){
+  async fetchVote(meeting_id : number, req: Request){
+    //TODO 로그인 멤버의 id 조회
+    const token = parseToken(req.headers);
+
+    if (!token){//토큰이 없으므로 로그인되지 않은 상태
+      throw NoRightException('로그인이 필요한 서비스입니다.');
+    } 
+    
+    const memberEmail = (await getMemberId(token)).email;
+    const user = await this.memberRepository.findOne({where:{email:memberEmail}});
+
+    if (!user){
+      throw NoRightException('잘못된 회원정보입니다.');
+    } 
+
+    const user_id = user.id;
+
     const meeting = await this.meetingRepository.findOne({where:{id:meeting_id}, relations:['meeting_members']});
     const vote = await this.voteRepository.findOne({where:{meeting_id:meeting_id}, relations:['vote_choices']})
 
@@ -141,8 +176,11 @@ export class MeetingsVoteService {
 
     //6. 로그인유저가 선택한 투표선택지 id 조회
 
-    //TODO 로그인 멤버의 id 조회
-    const user_id = 1;
+    const hasRight = this.meetingMemberRepository.findOne({where : {meeting_id : meeting_id, member_id : user_id}});
+    if(!hasRight){
+      throw NoRightException('해당 미팅에 참여한 멤버만 접근할 수 있습니다');
+    }
+
     fetchVote.user_choices = (await this.voteChoiceMemberRepository.find({where:{'member_id' : user_id}}))
                 .map((vote_choice)=>{
                   return {id : vote_choice.vote_choice_id};
@@ -150,9 +188,22 @@ export class MeetingsVoteService {
     return fetchVote;
   }
 
-  async createUserChoice(meeting_id : number, userChoiceDto : UserChoiceDto){
+  async createUserChoice(meeting_id : number, userChoiceDto : UserChoiceDto, req : Request){
     //TODO user_id 받아오기
-    const user_id = 1;
+    const token = parseToken(req.headers);
+
+    if (!token){//토큰이 없으므로 로그인되지 않은 상태
+      throw NoRightException('로그인이 필요한 서비스입니다.');
+    } 
+    
+    const memberEmail = (await getMemberId(token)).email;
+    const user = await this.memberRepository.findOne({where:{email:memberEmail}});
+
+    if (!user){
+      throw NoRightException('잘못된 회원정보입니다.');
+    } 
+
+    const user_id = user.id;
 
     const meeting = await this.meetingRepository.findOne({where:{id:meeting_id}});
     if (!meeting) {
@@ -208,9 +259,22 @@ export class MeetingsVoteService {
   }
 
 
-  async updateUserChoice(meeting_id : number, userChoiceDto : UserChoiceDto){
+  async updateUserChoice(meeting_id : number, userChoiceDto : UserChoiceDto, req : Request){
     //TODO user_id 받아오기
-    const user_id = 1;
+    const token = parseToken(req.headers);
+
+    if (!token){//토큰이 없으므로 로그인되지 않은 상태
+      throw NoRightException('로그인이 필요한 서비스입니다.');
+    } 
+    
+    const memberEmail = (await getMemberId(token)).email;
+    const user = await this.memberRepository.findOne({where:{email:memberEmail}});
+
+    if (!user){
+      throw NoRightException('잘못된 회원정보입니다.');
+    } 
+
+    const user_id = user.id;
 
     const meeting = await this.meetingRepository.findOne({where:{id:meeting_id}});
     if (!meeting) {
@@ -254,9 +318,22 @@ export class MeetingsVoteService {
 
   }
 
-  async closeVote(meeting_id : number, voteCloseDto : VoteCloseDto){
+  async closeVote(meeting_id : number, voteCloseDto : VoteCloseDto, req : Request){
     //TODO user_id 받아오기
-    const user_id = 1;
+    const token = parseToken(req.headers);
+
+    if (!token){//토큰이 없으므로 로그인되지 않은 상태
+      throw NoRightException('로그인이 필요한 서비스입니다.');
+    } 
+    
+    const memberEmail = (await getMemberId(token)).email;
+    const user = await this.memberRepository.findOne({where:{email:memberEmail}});
+
+    if (!user){
+      throw NoRightException('잘못된 회원정보입니다.');
+    } 
+
+    const user_id = user.id;
 
     const meeting = await this.meetingRepository.findOne({where:{id:meeting_id}});
     if (!meeting) {

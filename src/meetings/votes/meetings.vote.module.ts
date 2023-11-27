@@ -8,6 +8,7 @@ import { Meeting } from 'src/entity/meeting.entity';
 import { VoteChoice } from 'src/entity/voteChoice.entity';
 import { VoteChoiceMember } from 'src/entity/voteChoiceMember.entity';
 import { MeetingMember } from 'src/entity/meetingMember.entity';
+import { Member } from 'src/entity/member.entity';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MeetingMember } from 'src/entity/meetingMember.entity';
       MeetingDate,
       MeetingMember,
       VoteChoiceMember,
+      Member,
     ]),
   ],
   controllers: [MeetingsVoteController],
