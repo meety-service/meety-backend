@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   EntityNotFoundException,
   InvalidRequestException,
+  NoRightException,
 } from 'src/common/exception/service.exception';
 import { Meeting } from 'src/entity/meeting.entity';
 import { MeetingDate } from 'src/entity/meetingDate.entity';
@@ -14,6 +15,7 @@ import {
   ScheduleDto,
   SelectTimetableDto,
 } from 'src/meetings/schedule/dto/schedule.dto';
+import { getMemberId, parseToken } from 'src/util';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -30,26 +32,25 @@ export class MeetingsScheduleService {
     private members: Repository<Member>,
   ) {}
 
-  async createSchedules(
-    meetingId: number,
-    memberId: number,
-    scheduleDto: ScheduleDto,
-  ) {
+  async createSchedules(headers, meetingId: number, scheduleDto: ScheduleDto) {
+    const userId = await getMemberId(parseToken(headers));
+    const member = await this.members.findOne({
+      where: { email: userId.email },
+    });
+
+    if (!member) {
+      throw NoRightException('로그인 정보가 유효하지 않습니다.');
+    }
+
     let meetingMember = await this.meetingMembers.findOne({
-      where: { member_id: memberId, meeting_id: meetingId },
+      where: { member_id: member.id, meeting_id: meetingId },
     });
 
     // URL을 공유 받아서 새롭게 미팅에 참여하는 경우 새롭게 멤버를 meeting_member에 추가
     if (!meetingMember) {
-      const member = await this.members.findOne({ where: { id: memberId } });
-
-      // 단, 멤버가 존재하지 않으면 Exception 발생
-      if (!member)
-        throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
-
       meetingMember = await this.meetingMembers.save({
         meeting_id: meetingId,
-        member_id: memberId,
+        member_id: member.id,
         nickname: scheduleDto.nickname,
         list_visible: 1,
       });
@@ -60,14 +61,14 @@ export class MeetingsScheduleService {
       throw InvalidRequestException('잘못된 user state 값입니다.');
 
     await this.meetingMembers.update(
-      { meeting_id: meetingId, member_id: memberId },
+      { meeting_id: meetingId, member_id: member.id },
       { nickname: scheduleDto.nickname, user_state: 1 },
     );
 
     // update는 update함수를 통해 이루어지지만, 클라이언트에서 잘못 호출하거나 닉네임 변경 등이 필요할 때
     await this.selectTimetables.delete({
       meeting_id: meetingId,
-      member_id: memberId,
+      member_id: member.id,
     });
 
     const availableMeetingDates = await this.meetingDates.find({
@@ -93,9 +94,18 @@ export class MeetingsScheduleService {
     );
   }
 
-  async getPersonalSchedules(meetingId: number, memberId: number) {
+  async getPersonalSchedules(headers, meetingId: number) {
+    const userId = await getMemberId(parseToken(headers));
+    const member = await this.members.findOne({
+      where: { email: userId.email },
+    });
+
+    if (!member) {
+      throw NoRightException('로그인 정보가 유효하지 않습니다.');
+    }
+
     const meetingMember = await this.meetingMembers.findOne({
-      where: { member_id: memberId, meeting_id: meetingId },
+      where: { member_id: member.id, meeting_id: meetingId },
     });
     if (!meetingMember)
       throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
@@ -110,7 +120,7 @@ export class MeetingsScheduleService {
     });
 
     const selectTimetable = await this.selectTimetables.find({
-      where: { meeting_id: meetingId, member_id: memberId },
+      where: { meeting_id: meetingId, member_id: member.id },
     });
 
     const selectedItems: SelectTimetableDto[] = availableMeetingDates
@@ -134,21 +144,18 @@ export class MeetingsScheduleService {
     };
   }
 
-  isDateInRange(date: string, startDate: string, endDate: string): boolean {
-    const dateMs = new Date(date).getTime();
-    const startMs = new Date(startDate).getTime();
-    const endMs = new Date(endDate).getTime();
+  async updateSchedules(headers, meetingId: number, newSchedule: ScheduleDto) {
+    const userId = await getMemberId(parseToken(headers));
+    const member = await this.members.findOne({
+      where: { email: userId.email },
+    });
 
-    return dateMs >= startMs && dateMs <= endMs;
-  }
+    if (!member) {
+      throw NoRightException('로그인 정보가 유효하지 않습니다.');
+    }
 
-  async updateSchedules(
-    meetingId: number,
-    memberId: number,
-    newSchedule: ScheduleDto,
-  ) {
     const meetingMember = await this.meetingMembers.findOne({
-      where: { member_id: memberId, meeting_id: meetingId },
+      where: { member_id: member.id, meeting_id: meetingId },
     });
     if (!meetingMember)
       throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
@@ -178,7 +185,7 @@ export class MeetingsScheduleService {
         const selectTimetable = new SelectTimetable();
         selectTimetable.meeting_id = meetingId;
         selectTimetable.meeting_date_id = meetingDate.id;
-        selectTimetable.member_id = memberId;
+        selectTimetable.member_id = member.id;
         selectTimetable.select_time = time.time;
         schedules.push(selectTimetable);
       });
@@ -186,13 +193,13 @@ export class MeetingsScheduleService {
 
     //member 닉네임 업데이트
     await this.meetingMembers.update(
-      { meeting_id: meetingId, member_id: memberId },
+      { meeting_id: meetingId, member_id: member.id },
       { nickname: newSchedule.nickname },
     );
 
     //기존 스케줄 삭제
     await this.selectTimetables.delete({
-      member_id: memberId,
+      member_id: member.id,
       meeting_id: meetingId,
     });
 
