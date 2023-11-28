@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Headers,
+} from '@nestjs/common';
 import { MeetingsScheduleService } from './meetings.schedule.service';
 import { ScheduleDto } from 'src/meetings/schedule/dto/schedule.dto';
 @Controller('meetings/:id/schedule')
@@ -8,26 +16,35 @@ export class MeetingsScheduleController {
   ) {}
 
   @Post()
-  createSchedules(@Param('id') meetingId: number, @Body() scheduleDto: ScheduleDto) {
-    const memberId = 1;
-    return this.MeetingsScheduleService.createSchedules(meetingId, memberId, scheduleDto);
+  createSchedules(
+    @Headers() headers,
+    @Param('id') meetingId: number,
+    @Body() scheduleDto: ScheduleDto,
+  ) {
+    return this.MeetingsScheduleService.createSchedules(
+      headers,
+      meetingId,
+      scheduleDto,
+    );
   }
 
   @Get()
-  getPersonalSchedules(@Param('id') meetingId: number) {
-    const memberId = 1;
-    return this.MeetingsScheduleService.getPersonalSchedules(meetingId, memberId);
+  getPersonalSchedules(@Headers() headers, @Param('id') meetingId: number) {
+    return this.MeetingsScheduleService.getPersonalSchedules(
+      headers,
+      meetingId,
+    );
   }
 
   @Put()
   updateSchedules(
+    @Headers() headers,
     @Param('id') meetingId: number,
     @Body() newSchedule: ScheduleDto,
   ) {
-    const memberId = 1;
     return this.MeetingsScheduleService.updateSchedules(
+      headers,
       meetingId,
-      memberId,
       newSchedule,
     );
   }
