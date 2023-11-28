@@ -184,6 +184,8 @@ export class MeetingsVoteService {
     fetchVote.user_choices = (await this.voteChoiceMemberRepository.find({where:{'member_id' : user_id}}))
                 .map((vote_choice)=>{
                   return {id : vote_choice.vote_choice_id};
+                }).filter((vote_choice)=>{
+                  return vote.vote_choices.find(v => v.id == vote_choice.id);
                 });
     return fetchVote;
   }
