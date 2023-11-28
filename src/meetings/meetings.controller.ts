@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Body,
+  Headers,
 } from '@nestjs/common';
 import { MeetingsService } from './meetings.service';
 import { MeetingDto } from './dto/meeting.dto';
@@ -15,9 +16,8 @@ export class MeetingsController {
   constructor(private readonly meetingsService: MeetingsService) {}
 
   @Get()
-  getMeetingsFromMainScreen() {
-    const memberId = 1; // TODO: member id를 request에서 파싱
-    return this.meetingsService.getMeetingsFromMainScreen(memberId);
+  getMeetingsFromMainScreen(@Headers() headers) {
+    return this.meetingsService.getMeetingsFromMainScreen(headers);
   }
 
   @Delete('/:id')
@@ -26,33 +26,31 @@ export class MeetingsController {
   }
 
   @Patch('/:id/hiding')
-  hideMeetingById(
-    @Param('id') meetingId: number,
-  ) {
-    const memberId = 1; // TODO: member id를 request에서 파싱
-    return this.meetingsService.hideMeetingById(
-      memberId,
-      meetingId,
-    );
+  hideMeetingById(@Headers() headers, @Param('id') meetingId: number) {
+    return this.meetingsService.hideMeetingById(headers, meetingId);
   }
 
   @Post()
-  createMeeting(@Body() meetingDto: MeetingDto) {
-    const managerId = 1; // TODO: member id를 request에서 파싱
-    return this.meetingsService.createMeeting(meetingDto, managerId);
+  createMeeting(@Headers() headers, @Body() meetingDto: MeetingDto) {
+    return this.meetingsService.createMeeting(headers, meetingDto);
   }
 
   @Get('/:id')
-  getMeetingById(@Param('id') meetingId: number) {
-    return this.meetingsService.getMeetingById(meetingId);
+  getMeetingById(@Headers() headers, @Param('id') meetingId: number) {
+    return this.meetingsService.getMeetingById(headers, meetingId);
   }
 
   @Post('/:id/user-state')
   validateUserState(
+    @Headers() headers,
     @Param('id') meetingId: number,
     @Body('user_state') userState: number,
   ) {
-    return this.meetingsService.validateUserState(meetingId, userState);
+    return this.meetingsService.validateUserState(
+      headers,
+      meetingId,
+      userState,
+    );
   }
 
   // for test
