@@ -101,11 +101,28 @@ export class LoginService {
     }
 
     if (!(await this.members.findOne({ where: { email: memberId.email } }))) {
-      return { status: 500 }; // 에러: 구글 인증은 되지만 login 정보 찾을수 없음
+      return { status: 401 }; // 에러: 구글 인증은 되지만 login 정보 찾을수 없음
     }
 
     return { status: 200 };
     //200:로그인 된 상태로 정상 응답, 401:쿠키 없음(로그인되지 않은 상태), 500:에러
+  }
+
+  async withdraw(request: Request) {
+    const token = parseToken(request.headers);
+
+    if (!token) return { status: 401 }; // 401 : token이 없는 경우(로그인되지 않았는데 회원 탈퇴 요청)
+
+    const memberId = await getMemberId(token);
+
+    if (!memberId.email) return { status: 500 }; // 500 : token은 있지만 구글 요청이 제대로 되지 않음.. 만료된 토큰인지 요청이 실패했는지 구분 불가
+
+    await this.members.update(
+      { email: memberId.email },
+      { email: null, token: null },
+    ); // 탈퇴 시 멤버 테이블에서 개인정보를 모두 지움
+
+    return { status: 200 };
   }
 }
 

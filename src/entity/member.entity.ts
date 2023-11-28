@@ -19,7 +19,7 @@ export class Member extends BaseEntity {
   @Column({nullable:true})
   token: string;
 
-  @Column()
+  @Column({nullable:true})
   email: string;
 
   @OneToMany(type => Meeting, meeting => meeting.member)
