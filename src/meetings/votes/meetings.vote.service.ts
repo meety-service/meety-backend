@@ -311,7 +311,17 @@ export class MeetingsVoteService {
     })
 
     //이전 투표 지우기
-    await this.voteChoiceMemberRepository.delete({member_id:user_id});
+
+    const vote_choices_id = vote_choices.map((choice)=>{return choice.id});
+
+    await this.voteChoiceMemberRepository
+      .createQueryBuilder()
+      .delete()
+      .from(VoteChoiceMember)
+      .where("member_id = :memberId", { memberId: user_id })
+      .andWhere("vote_choice_id IN (:voteChoiceIds)", { voteChoiceIds: vote_choices_id })
+      .execute();
+    
 
     //투표 저장하기
     userChoiceDto.vote_choices.forEach(async (user_choice)=>{
