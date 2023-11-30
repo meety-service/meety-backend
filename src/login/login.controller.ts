@@ -49,7 +49,6 @@ export class LoginController {
   @Get('/withdraw')
   async withdraw(@Req() req: Request, @Res() res) {
     const { status } = await this.loginService.withdraw(req);
-    res.status = status;
-    return res.send(`<script>removeCookie('X-Gapi-Refresh-Token'); </script>`);
+    return res.sendStatus(status);
   }
 }
