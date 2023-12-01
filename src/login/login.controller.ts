@@ -21,8 +21,16 @@ export class LoginController {
     const { cookieName, refreshToken, status } =
       await this.loginService.login(req);
     if (status) {
+      //not okay status..
+
+      if (status == 200) {
+        return res.send(
+          `<script>window.location.href = '${process.env.FRONTURL}'; </script>`,
+        );
+      }
       return res.sendStatus(status);
     }
+    console.log('here?');
     res.setHeader('Content-Type', 'text/html');
     res.setHeader('Access-Control-Allow-origin', '*'); // 모든 출처(origin)을 허용
     res.setHeader(

@@ -27,6 +27,14 @@ export class LoginService {
       'code',
     );
 
+    const { status } = await this.refresh(request);
+
+    if (status == 200) {
+      //already logged in
+
+      return { status: 200 };
+    }
+
     const bodyObject = {
       code,
       client_id: process.env.NEXT_PUBLIC_GAPI_CLIENT_ID,
@@ -66,7 +74,7 @@ export class LoginService {
       console.log('google server login response error');
       return { status: 500 };
     }
-    
+
     //이메일이 데이터베이스 유저 테이블에 존재하는지 확인하고, 없다면 유저를 신규 등록해야 함
     const member = await this.members.findOne({ where: { email } });
     try {
@@ -135,4 +143,3 @@ export const GoogleAuthAccessURL = (() => {
   return accessurl.toString();
 })();
 //이 주소로 요청하면 구글 로그인 연동 창이 나오고 로그인을 완료하면 로그인 주소로 리디렉션됨.
-
