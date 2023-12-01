@@ -27,8 +27,6 @@ export class LoginService {
       'code',
     );
 
-    console.log('login try' + request.headers);
-
     const bodyObject = {
       code,
       client_id: process.env.NEXT_PUBLIC_GAPI_CLIENT_ID,
@@ -47,7 +45,7 @@ export class LoginService {
     const res = await fetch(url, options);
 
     if (!res.ok) {
-      console.log('google server request fail');
+      console.log('google server login request fail');
       return { status: res.status };
     }
 
@@ -65,11 +63,10 @@ export class LoginService {
       email = JSON.parse(id_token_string[1]).email;
     } catch (e) {
       //구글 응답에 email이 포함되지 않음... 등
-      console.log('google server response error');
+      console.log('google server login response error');
       return { status: 500 };
     }
-    console.log(email);
-    //TODO
+    
     //이메일이 데이터베이스 유저 테이블에 존재하는지 확인하고, 없다면 유저를 신규 등록해야 함
     const member = await this.members.findOne({ where: { email } });
     try {
@@ -83,7 +80,6 @@ export class LoginService {
       console.log(e, 'db member register error');
     }
 
-    console.log('login success');
     return {
       cookieName,
       refreshToken,
@@ -140,4 +136,3 @@ export const GoogleAuthAccessURL = (() => {
 })();
 //이 주소로 요청하면 구글 로그인 연동 창이 나오고 로그인을 완료하면 로그인 주소로 리디렉션됨.
 
-// https://accounts.google.com/o/oauth2/v2/auth?client_id=129605054816-l0haa5863jbvm7tcv7tr97gqq5ikrh52.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Flogin&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email&access_type=offline&prompt=consent

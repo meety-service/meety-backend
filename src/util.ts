@@ -4,7 +4,6 @@ export function parseToken(headers: Headers) {
   const cookieName = 'X-Gapi-Refresh-Token';
   const cookie = headers['cookie'] || headers['Cookie']; //쿠키로 클라이언트로부터 코드 전달받기
   if (!cookie || !cookie.includes(`${cookieName}=`)) {
-    console.log('cookie error', cookie);
     return { status: 401 };
   }
 
@@ -48,26 +47,8 @@ export async function getMemberId(token: string): Promise<UserId> {
     .replaceAll('_', '/')
     .split('.')
     .map((a) => atob(a));
-  console.log(id_token_string[1]);
   const email = JSON.parse(id_token_string[1]).email;
   return {
     email,
   } as UserId;
-  /*
-  const member = await this.members.findOne({ where: { email } });
-  if (!member) {
-    throw 'getMemberId error: user passed google auth, but not found in database';
-  }
-  console.log('refresh status');
-  console.log(!!member);
-  console.log(res.status);
-  console.log(member.id);
-  console.log(member.email);
-  return {
-    exists: !!member,
-    status: res.status,
-    member_id: member.id,
-    email: member.email,
-  } as UserId;
-  */
 }
