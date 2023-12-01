@@ -32,11 +32,45 @@ export class MeetingsScheduleService {
     private members: Repository<Member>,
   ) {}
 
+  isValidScheduleDates(
+    meetingDates: MeetingDate[],
+    inputDates: string[],
+  ): boolean {
+    inputDates.forEach((inputDate) => {
+      const available = meetingDates.find(
+        (meetingDate) => meetingDate.available_date === inputDate,
+      );
+      if (!available) {
+        return false;
+      }
+    });
+
+    return true;
+  }
+
+  isValidScheduleTimes(
+    startTime: string,
+    endTime: string,
+    inputTimes: string[],
+  ): boolean {
+    const timetables = this.generateAvailableTimetable(startTime, endTime);
+
+    inputTimes.forEach((time) => {
+      const available = timetables.find((timetable) => timetable === time);
+      if (!available) {
+        return false;
+      }
+    });
+
+    return true;
+  }
+
   async createSchedules(headers, meetingId: number, scheduleDto: ScheduleDto) {
     const userId = await getMemberId(parseToken(headers));
     const member = await this.members.findOne({
       where: { email: userId.email },
     });
+    const meeting = await this.meetings.findOne({ where: { id: meetingId } });
 
     if (!member) {
       throw NoRightException('로그인 정보가 유효하지 않습니다.');
@@ -77,15 +111,30 @@ export class MeetingsScheduleService {
 
     await Promise.all(
       scheduleDto.select_times.map(async (timetable) => {
-        const dateId = availableMeetingDates.find(
+        const meetingDate = availableMeetingDates.find(
           (date) => date.available_date === timetable.date,
-        ).id;
+        );
+
+        if (!meetingDate) {
+          throw InvalidRequestException('가능한 미팅 날짜 범위 밖입니다');
+        }
+
+        if (
+          !this.isValidScheduleTimes(
+            meeting.start_time,
+            meeting.end_time,
+            timetable.times.map((time) => time.time),
+          )
+        ) {
+          throw InvalidRequestException('가능한 미팅 시간 범위 밖입니다');
+        }
+
         return Promise.all(
           timetable.times.map(async (time) => {
             await this.selectTimetables.insert({
               meeting_id: meetingMember.meeting_id,
               member_id: meetingMember.member_id,
-              meeting_date_id: dateId,
+              meeting_date_id: meetingDate.id,
               select_time: time.time,
             });
           }),
@@ -110,7 +159,7 @@ export class MeetingsScheduleService {
     if (!meetingMember)
       throw EntityNotFoundException('일치하는 데이터가 존재하지 않습니다.');
 
-    // TODO: meeting id에 해당하는 meeting의 가능한 dates 목록을 뽑음.
+    // meeting id에 해당하는 meeting의 가능한 dates 목록을 뽑음.
     // 해당 available meeting dates에 해당하는 meeting dates id를 기준으로,
     // selected time table에서 meeting id와 member id가 동시에 일치하는 목록을 일단 다 뽑고
     // available meeting dates를 기준으로 mapping해줌.
