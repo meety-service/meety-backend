@@ -176,7 +176,7 @@ export class MeetingsVoteService {
 
     //6. 로그인유저가 선택한 투표선택지 id 조회
 
-    const hasRight = this.meetingMemberRepository.findOne({where : {meeting_id : meeting_id, member_id : user_id}});
+    const hasRight = (await this.meetingMemberRepository.findOne({where : {meeting_id : meeting_id, member_id : user_id}}));
     if(!hasRight){
       throw NoRightException('해당 미팅에 참여한 멤버만 접근할 수 있습니다');
     }
